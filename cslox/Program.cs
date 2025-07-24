@@ -24,29 +24,26 @@ Error[] RunCode(string src, string? filePath = null)
 {
     Console.WriteLine($"src: {src}");
     var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
-    var tokens = lexer.Accumulate(); 
+    var tokens = lexer.Accumulate();
     if (lexer.Errors.Count > 0) return lexer.Errors.ToArray();
-    
-    
+
+
     foreach (Token token in tokens)
     {
-        
     }
 
-    return []; 
+    return [];
 }
 
 void RunFile(string filePath)
 {
-    var src = File.ReadAllText(filePath); 
+    var src = File.ReadAllText(filePath);
     var errors = RunCode(src, filePath);
     var exit = ReportAllErrorsIfSome(errors);
     if (exit)
     {
-        return; 
+        return;
     }
-    
-    
 }
 
 void Prompt()
@@ -58,8 +55,8 @@ void Prompt()
         string? line = Console.ReadLine();
         if (line is null || line == ":quit")
             break;
-        var errors = RunCode(line); 
-        var exit = ReportAllErrorsIfSome(errors); 
+        var errors = RunCode(line);
+        var exit = ReportAllErrorsIfSome(errors);
         Console.WriteLine($"Found {errors.Length} errors");
     }
 }
@@ -77,47 +74,5 @@ public record struct SourceLocation(string File, int Line, int Offset)
 
 public record class Error(SourceLocation Location, string Message)
 {
-    public override string ToString() => $"{Location}: {Message}"; 
-}
-
-public class Token
-{
-    public Token()
-    {
-    }
-
-    public Token(TokenType type, string lexeme, object? literal, SourceLocation loc)
-    {
-        Type = type;
-        Lexeme = lexeme;
-        Literal = literal;
-        Location = loc; 
-    }
-
-    public TokenType Type { get; set; } 
-    public SourceLocation Location { get; set; }
-    public Object? Literal { get; set; } 
-    public string Lexeme  { get; set; } = "";
-    public override string ToString() => $"{Type}: {Literal ?? "<nil>"}, Lexeme: {(!string.IsNullOrEmpty(Lexeme) ? Lexeme : "\"\"")}"; 
-}
-
-public enum TokenType {
-    // Single-character tokens.
-    LeftParen, RightParen, LeftBrace, RightBrace,
-    Comma, Dot, Minus, Plus, Semicolon, Slash, Star,
-
-    // One or two character tokens.
-    Bang, BangEqual,
-    Equal, EqualEqual,
-    Greater, GreaterEqual,
-    Less, LessEqual,
-
-    // Literals.
-    Identifier, String, Number,
-
-    // Keywords.
-    And, Class, Else, False, Fun, For, If, Nil, Or,
-    Print, Return, Super, This, True, Var, While,
-
-    Eof
+    public override string ToString() => $"{Location}: {Message}";
 }
