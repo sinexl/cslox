@@ -60,7 +60,7 @@ public class Lexer
     [Pure]
     public Token? ScanSingle()
     {
-        while (true)
+        while (!IsEof())
         {
             var state = SaveState();
             char c = NextChar();
@@ -113,10 +113,55 @@ public class Lexer
                     return ScanNumber();
                 }
 
+                case var ch when ch.IsIdBeginning():
+                {
+                    RestoreState(state);
+                    return ScanIdentifier();
+                }
                 default:
                     Error($"unexpected character '{c}'"); break;
             }
         }
+
+        return null;
+    }
+
+    [Pure]
+    private Token? ScanIdentifier()
+    {
+        var start = _state.Current;
+        while (PeekChar().IsId())
+        {
+            SkipChar();
+        }
+
+        var word = Src.AsSpan(start, _state.Current - start);
+
+        // TODO: factor out this switch case. 
+        TokenType type = word switch
+        {
+            "and" => TokenType.And,
+            "class" => TokenType.Class,
+            "else" => TokenType.Else,
+            "false" => TokenType.False,
+            "fun" => TokenType.Fun,
+            "for" => TokenType.For,
+            "if" => TokenType.If,
+            "nil" => TokenType.Nil,
+            "or" => TokenType.Or,
+            "print" => TokenType.Print,
+            "return" => TokenType.Return,
+            "super" => TokenType.Super,
+            "this" => TokenType.This,
+            "true" => TokenType.True,
+            "var" => TokenType.Var,
+            "while" => TokenType.While,
+            _ => TokenType.Identifier
+        };
+
+        string wordStr = word.ToString();
+        return AddToken(type, wordStr, wordStr);
+        // return AddToken() 
     }
 
     [Pure]
@@ -221,7 +266,7 @@ public class Lexer
                      // this is a comment
                      (( )){} // grouping stuff
                      !*+-/=<> <= == // operators
-                     "String Literal" 123
+                     "String Literal" 123 hello and or _bob bob123 bob_
                      """;
         var self = new Lexer(src, "self");
         Token[] tokens = self.Accumulate().ToArray();
@@ -264,7 +309,7 @@ public class Token
 
     public override string ToString()
     {
-        string lexeme = !string.IsNullOrEmpty(Lexeme) && Type.HasLexeme() ? $"Lexeme: {Lexeme}" : ""; 
+        string lexeme = !string.IsNullOrEmpty(Lexeme) && Type.HasLexeme() ? $"Lexeme: {Lexeme}" : "";
         string literal = Literal is not null ? $" ({Literal})" : "";
         return $"{Type}{literal}, {lexeme}";
     }
@@ -321,11 +366,14 @@ public enum TokenType
     Eof
 }
 
-public static class TokenExtensions
+public static class Extensions
 {
     public static bool HasLexeme(this TokenType type) => type switch
     {
         TokenType.Number or TokenType.String => true,
         _ => false
-    }; 
+    };
+
+    public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
+    public static bool IsId(this char c) => char.IsLetter(c) || char.IsDigit(c) || c == '_';
 }
