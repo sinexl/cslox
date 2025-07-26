@@ -34,7 +34,7 @@ public class Lexer
     }
 
     public List<Error> Errors { get; } = new();
-    public string Src { get; set; }
+    public string Src { get; init; }
 
     public IEnumerable<Token> Accumulate()
     {
