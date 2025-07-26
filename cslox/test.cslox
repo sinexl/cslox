@@ -1,0 +1,6 @@
+// this is a comment 
+/* this is also 
+      a comment */ 
+(( )){} // grouping stuff
+!*+-/=<> <= == // operators
+"String Literal" 123 hello and or _bob bob123 bob_

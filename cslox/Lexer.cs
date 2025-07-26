@@ -262,13 +262,9 @@ public class Lexer
 
     public static void Test()
     {
-        string src = """
-                     // this is a comment
-                     (( )){} // grouping stuff
-                     !*+-/=<> <= == // operators
-                     "String Literal" 123 hello and or _bob bob123 bob_
-                     """;
-        var self = new Lexer(src, "self");
+        var path = "test.cslox";
+        string src = File.ReadAllText(path);
+        var self = new Lexer(src, path);
         Token[] tokens = self.Accumulate().ToArray();
         foreach (var token in tokens)
         {
