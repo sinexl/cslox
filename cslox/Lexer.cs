@@ -86,11 +86,30 @@ public class Lexer
                     return CreateToken(Match('=') ? TokenType.LessEqual : TokenType.Less);
                 case '/':
                 {
-                    if (Match('/'))
+                    // Restore the cursor to the first '/',
+                    // ensuring that StartsWith works correctly with sequences like /*, //,  etc
+                    RestoreState(state);
+                    if (StartsWith("/*"))
+                    {
+                        // TODO: Consider supporting nested multi-line comments. 
+                        while (!StartsWith("*/"))
+                        {
+                            if (IsEof()) Error("Unterminated comment");
+                            SkipChar();
+                        }
+                    }
+                    else if (StartsWith("//"))
+                    {
                         while (PeekChar() != '\n' && !IsEof())
                             SkipChar();
+
+                        SkipChar();
+                    }
                     else
-                        return AddToken(TokenType.Slash);
+                    {
+                        SkipChar();
+                        return CreateToken(TokenType.Slash);
+                    }
 
                     break;
                 }
@@ -275,7 +294,7 @@ public class Lexer
     public LexerState SaveState() => _state;
     public void RestoreState(LexerState state) => _state = state;
 
-    public bool IsEof(int index) => index >= Src.Length;
+    private bool IsEof(int index) => index >= Src.Length;
     public bool IsEof() => _state.Current >= Src.Length;
 
     private void Error(string message)
