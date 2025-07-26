@@ -66,24 +66,24 @@ public class Lexer
             char c = NextChar();
             switch (c)
             {
-                case '(': return AddToken(TokenType.LeftParen);
-                case ')': return AddToken(TokenType.RightParen);
-                case '{': return AddToken(TokenType.LeftBrace);
-                case '}': return AddToken(TokenType.RightBrace);
-                case ',': return AddToken(TokenType.Comma);
-                case '.': return AddToken(TokenType.Dot);
-                case '-': return AddToken(TokenType.Minus);
-                case '+': return AddToken(TokenType.Plus);
-                case '*': return AddToken(TokenType.Star);
-                case ';': return AddToken(TokenType.Semicolon);
+                case '(': return CreateToken(TokenType.LeftParen);
+                case ')': return CreateToken(TokenType.RightParen);
+                case '{': return CreateToken(TokenType.LeftBrace);
+                case '}': return CreateToken(TokenType.RightBrace);
+                case ',': return CreateToken(TokenType.Comma);
+                case '.': return CreateToken(TokenType.Dot);
+                case '-': return CreateToken(TokenType.Minus);
+                case '+': return CreateToken(TokenType.Plus);
+                case '*': return CreateToken(TokenType.Star);
+                case ';': return CreateToken(TokenType.Semicolon);
                 case '!':
-                    return AddToken(Match('=') ? TokenType.BangEqual : TokenType.Bang);
+                    return CreateToken(Match('=') ? TokenType.BangEqual : TokenType.Bang);
                 case '=':
-                    return AddToken(Match('=') ? TokenType.EqualEqual : TokenType.Equal);
+                    return CreateToken(Match('=') ? TokenType.EqualEqual : TokenType.Equal);
                 case '>':
-                    return AddToken(Match('=') ? TokenType.GreaterEqual : TokenType.Greater);
+                    return CreateToken(Match('=') ? TokenType.GreaterEqual : TokenType.Greater);
                 case '<':
-                    return AddToken(Match('=') ? TokenType.LessEqual : TokenType.Less);
+                    return CreateToken(Match('=') ? TokenType.LessEqual : TokenType.Less);
                 case '/':
                 {
                     if (Match('/'))
@@ -160,7 +160,7 @@ public class Lexer
         };
 
         string wordStr = word.ToString();
-        return AddToken(type, wordStr, wordStr);
+        return CreateToken(type, wordStr, wordStr);
         // return AddToken() 
     }
 
@@ -189,7 +189,7 @@ public class Lexer
 
         string text = Src.Substring(start, _state.Current - start);
 
-        return AddToken(TokenType.Number, text, double.Parse(text));
+        return CreateToken(TokenType.Number, text, double.Parse(text));
     }
 
 
@@ -216,7 +216,7 @@ public class Lexer
 
         SkipChar(); // " 
         string value = Src.Substring(start, length);
-        return AddToken(TokenType.String, value, value);
+        return CreateToken(TokenType.String, value, value);
     }
 
     private bool Match(char expected)
@@ -232,12 +232,12 @@ public class Lexer
     }
 
     [Pure]
-    private Token AddToken(TokenType type, string lexeme, object? literal = null)
+    private Token CreateToken(TokenType type, string lexeme, object? literal = null)
     {
         return new Token(type, lexeme, literal, SourceLoc);
     }
 
-    private Token AddToken(TokenType type, object? literal = null)
+    private Token CreateToken(TokenType type, object? literal = null)
     {
         return new Token(type, Src[_state.Current].ToString(), literal, SourceLoc);
     }
