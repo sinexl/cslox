@@ -1,6 +1,8 @@
+123 helo 
+world second
 // this is a comment 
 /* this is also 
       a comment */ 
 (( )){} // grouping stuff
 !*+-/=<> <= == // operators
-"String Literal" 123 hello and or _bob bob123 bob_
+"String Literal" 474 bog

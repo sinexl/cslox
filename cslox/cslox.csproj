@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <None Update="test.cslox">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 

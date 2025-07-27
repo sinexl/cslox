@@ -67,8 +67,19 @@ bool ReportAllErrorsIfSome(Error[] errors1)
     throw new NotImplementedException();
 }
 
-public record struct SourceLocation(string File, int Line, int Offset)
+public record struct SourceLocation()
 {
+    public string File { get; set; } 
+    public int Line { get; set; }
+    public int Offset   { get; set; }
+
+    public SourceLocation(string file, int line, int offset) : this()
+    {
+        File = file;
+        Line = line;
+        Offset = offset;
+    }
+
     public override string ToString() => $"{File}:{Line}:{Offset}";
 }
 

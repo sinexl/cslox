@@ -13,6 +13,11 @@ public record struct LexerState
         LineNumber = 1;
     }
 
+    public SourceLocation ToSourceLocation(string file)
+    {
+        return new SourceLocation(file: file, line: LineNumber, offset: Current - LineStart);
+    }
+
     public int Current { get; set; }
     public int LineStart { get; set; }
     public int LineNumber { get; set; }
@@ -24,17 +29,21 @@ public class Lexer
     private LexerState _state;
 
 
-    public string FilePath;
+    public string FilePath { get; init; }
 
     public Lexer(string src, string filePath)
     {
         Src = src;
         FilePath = filePath;
         _state = new LexerState();
+        _tokenStart = _state;
     }
 
     public List<Error> Errors { get; } = new();
     public string Src { get; init; }
+
+    public SourceLocation SourceLoc => new(FilePath, _state.LineNumber, _state.Current - _state.LineStart);
+    private LexerState _tokenStart;
 
     public IEnumerable<Token> Accumulate()
     {
@@ -55,98 +64,105 @@ public class Lexer
         return tokens.ToArray();
     }
 
-    public SourceLocation SourceLoc => new(FilePath, _state.LineNumber, _state.LineStart);
-
     [Pure]
     public Token? ScanSingle()
     {
-        while (!IsEof())
+        SkipWhitespacesAndComments();
+        if (IsEof()) return null;
+        var saved = SaveState();
+        _tokenStart = _state;
+        char c = NextChar();
+        switch (c)
         {
-            var state = SaveState();
-            char c = NextChar();
-            switch (c)
+            case '(': return CreateToken(TokenType.LeftParen);
+            case ')': return CreateToken(TokenType.RightParen);
+            case '{': return CreateToken(TokenType.LeftBrace);
+            case '}': return CreateToken(TokenType.RightBrace);
+            case ',': return CreateToken(TokenType.Comma);
+            case '.': return CreateToken(TokenType.Dot);
+            case '-': return CreateToken(TokenType.Minus);
+            case '+': return CreateToken(TokenType.Plus);
+            case '*': return CreateToken(TokenType.Star);
+            case ';': return CreateToken(TokenType.Semicolon);
+            case '/':
             {
-                case '(': return CreateToken(TokenType.LeftParen);
-                case ')': return CreateToken(TokenType.RightParen);
-                case '{': return CreateToken(TokenType.LeftBrace);
-                case '}': return CreateToken(TokenType.RightBrace);
-                case ',': return CreateToken(TokenType.Comma);
-                case '.': return CreateToken(TokenType.Dot);
-                case '-': return CreateToken(TokenType.Minus);
-                case '+': return CreateToken(TokenType.Plus);
-                case '*': return CreateToken(TokenType.Star);
-                case ';': return CreateToken(TokenType.Semicolon);
-                case '!':
-                    return CreateToken(Match('=') ? TokenType.BangEqual : TokenType.Bang);
-                case '=':
-                    return CreateToken(Match('=') ? TokenType.EqualEqual : TokenType.Equal);
-                case '>':
-                    return CreateToken(Match('=') ? TokenType.GreaterEqual : TokenType.Greater);
-                case '<':
-                    return CreateToken(Match('=') ? TokenType.LessEqual : TokenType.Less);
-                case '/':
-                {
-                    // Restore the cursor to the first '/',
-                    // ensuring that StartsWith works correctly with sequences like /*, //,  etc
-                    RestoreState(state);
-                    if (StartsWith("/*"))
-                    {
-                        // TODO: Consider supporting nested multi-line comments. 
-                        while (!StartsWith("*/"))
-                        {
-                            if (IsEof()) Error("Unterminated comment");
-                            SkipChar();
-                        }
-                    }
-                    else if (StartsWith("//"))
-                    {
-                        while (PeekChar() != '\n' && !IsEof())
-                            SkipChar();
+                var next = PeekNext();
+                Debug.Assert(next is not '*' and not '/',
+                    $"Comments should be eliminated by {nameof(SkipWhitespacesAndComments)}");
+                return CreateToken(TokenType.Slash);
+            }
+            case '!':
+                return CreateToken(Match('=') ? TokenType.BangEqual : TokenType.Bang);
+            case '=':
+                return CreateToken(Match('=') ? TokenType.EqualEqual : TokenType.Equal);
+            case '>':
+                return CreateToken(Match('=') ? TokenType.GreaterEqual : TokenType.Greater);
+            case '<':
+                return CreateToken(Match('=') ? TokenType.LessEqual : TokenType.Less);
+            // @whitespaces
+            case ' ' or '\r' or '\t' or '\n':
+            {
+                throw new UnreachableException(
+                    $"Whitespaces should be eliminated by {nameof(SkipWhitespacesAndComments)}");
+                // _tokenStart = _tokenStart with { Current = _state.Current + 1 };
+                break;
+            }
+            case '"':
+            {
+                RestoreState(saved);
+                return ScanString();
+            }
 
-                        SkipChar();
-                    }
-                    else
-                    {
-                        SkipChar();
-                        return CreateToken(TokenType.Slash);
-                    }
+            case var d when char.IsDigit(d):
+            {
+                RestoreState(saved);
+                return ScanNumber();
+            }
 
-                    break;
-                }
-                case ' ' or '\r' or '\t':
-                    break;
-                case '\n':
-                {
-                    _state.LineNumber++;
-                    break;
-                }
-                case '"':
-                {
-                    RestoreState(state);
-                    return ScanString();
-                }
-
-                case var d when char.IsDigit(d):
-                {
-                    RestoreState(state);
-                    return ScanNumber();
-                }
-
-                case var ch when ch.IsIdBeginning():
-                {
-                    RestoreState(state);
-                    return ScanIdentifier();
-                }
-                default:
-                    Error($"unexpected character '{c}'"); break;
+            case var ch when ch.IsIdBeginning():
+            {
+                RestoreState(saved);
+                return ScanIdentifier();
+            }
+            default:
+            {
+                Error($"unexpected character '{c}'");
+                break;
             }
         }
 
         return null;
     }
 
+    private void SkipWhitespacesAndComments()
+    {
+        while (true)
+        {
+            if (char.IsWhiteSpace(PeekChar()))
+                while (char.IsWhiteSpace(PeekChar()))
+                    SkipChar();
+            else if (StartsWith("/*"))
+            {
+                // TODO: Consider supporting nested multi-line comments. 
+                while (!StartsWith("*/"))
+                {
+                    if (IsEof()) Error("Unterminated comment");
+                    SkipChar();
+                }
+            }
+            else if (StartsWith("//"))
+            {
+                while (PeekChar() != '\n' && !IsEof())
+                    SkipChar();
+
+                SkipChar();
+            }
+            else break;
+        }
+    }
+
     [Pure]
-    private Token? ScanIdentifier()
+    private Token ScanIdentifier()
     {
         var start = _state.Current;
         while (PeekChar().IsId())
@@ -253,16 +269,31 @@ public class Lexer
     [Pure]
     private Token CreateToken(TokenType type, string lexeme, object? literal = null)
     {
-        return new Token(type, lexeme, literal, SourceLoc);
+        return new Token(type, lexeme, literal, _tokenStart.ToSourceLocation(FilePath));
     }
 
     private Token CreateToken(TokenType type, object? literal = null)
     {
-        return new Token(type, Src[_state.Current].ToString(), literal, SourceLoc);
+        return new Token(type, Src[_state.Current].ToString(), literal, _tokenStart.ToSourceLocation(FilePath));
     }
 
     [Pure]
-    private char NextChar() => Src[_state.Current++];
+    private char NextChar()
+    {
+        char character = Src[_state.Current];
+        switch (character)
+        {
+            case '\n':
+            {
+                _state.LineNumber++;
+                _state.LineStart = _state.Current;
+                break;
+            }
+        }
+
+        _state.Current++;
+        return character;
+    }
 
     private void SkipChar() => _ = NextChar();
 
@@ -281,13 +312,19 @@ public class Lexer
 
     public static void Test()
     {
-        var path = "test.cslox";
+        string path = "./test.cslox";
         string src = File.ReadAllText(path);
+
         var self = new Lexer(src, path);
         Token[] tokens = self.Accumulate().ToArray();
         foreach (var token in tokens)
         {
             Console.WriteLine(token);
+        }
+
+        foreach (var error in self.Errors)
+        {
+            Console.WriteLine($"Error: {error}");
         }
     }
 
