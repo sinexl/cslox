@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using System.Reflection.Metadata;
 using cslox;
 
 if (args.Length > 1)
