@@ -31,9 +31,11 @@ namespace cslox.Ast.Generated;
 
 // ReSharper disable InconsistentNaming
 
-public abstract class {base_class} {{
+public abstract class {base_class} 
+{{
     public abstract TResult Accept<TResult>({default_visitor_name}<TResult> visitor);
 }}
+
 """
         f.write(code)
         define_visitor(f, base_class, default_visitor_name)
