@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from io import TextIOWrapper
+from typing import Callable
 
 TAB = " " * 4
 
@@ -43,6 +44,26 @@ public abstract class {base_class} {{
             define_type(f, base_class, name, names, default_visitor_name)
 
 
+def fields_as_parameters(fields: list[tuple], 
+                         name_mangle: Callable[[str], str] = lambda x: x,
+                         type_mangle: Callable[[str], str] = lambda x: x) -> str:
+    result = "("
+    for index in range(len(fields)):
+        field_type, field_name = fields[index]
+        actual_type = type_mangle(field_type)
+        result += actual_type 
+        # Prevent from having " Name" 
+        if len(actual_type) > 0: 
+            result += " "
+        result += name_mangle(field_name)
+        if index == len(fields) - 1:
+            result += ")"
+        else:
+            result += ", "
+
+    return result
+
+
 def define_type(f: TextIOWrapper, base_class_name: str, this_class_name: str, fields: list[tuple], visitor_name: str):
     f.writeln = lambda x: f.write(x + "\n")
     f.writeln(f"public class {this_class_name} : {base_class_name} \n{{")
@@ -51,19 +72,14 @@ def define_type(f: TextIOWrapper, base_class_name: str, this_class_name: str, fi
 
     f.write("\n")
     # Constructor  
-    f.write(f"{TAB}public {this_class_name}(")
-    for index in range(len(fields)):
-        field_type, field_name = fields[index]
-        f.write(f"{field_type} {field_name}")
-        if index == len(fields) - 1:
-            f.write(")")
-        else:
-            f.write(", ")
+    name_mangle = lambda x: f'_{x}'
+    as_parameters = fields_as_parameters(fields, name_mangle)
+    f.write(f"{TAB}public {this_class_name}{as_parameters}")
     f.write("\n")
     # Constructor Body
     f.writeln(f"{TAB}{{")
     for field_type, field_name in fields:
-        f.writeln(f"{TAB}{TAB}this.{field_name} = {field_name};")
+        f.writeln(f"{TAB}{TAB}this.{field_name} = {name_mangle(field_name)};")
 
     f.writeln(f"{TAB}}}\n")
 
@@ -71,8 +87,13 @@ def define_type(f: TextIOWrapper, base_class_name: str, this_class_name: str, fi
     f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor_name}<TResult> visitor)")
     f.writeln(f"{TAB}{{")
     f.writeln(f"{TAB}{TAB}return visitor.Visit<{this_class_name}>(this);")
-    f.writeln(f"{TAB}}}")
+    f.writeln(f"{TAB}}}\n")
 
+    # Deconstructor 
+    discard = lambda _: ''
+    deconstruct_parameters = fields_as_parameters(fields, type_mangle=lambda x: 'out ' + x, name_mangle=name_mangle)
+    f.writeln(f"{TAB}public void Deconstruct{deconstruct_parameters} =>")
+    f.writeln(f"{TAB*2}{fields_as_parameters(fields, name_mangle, discard)} = {fields_as_parameters(fields, type_mangle= lambda _: '')};")
     f.writeln("}\n")
 
 
