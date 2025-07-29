@@ -104,6 +104,6 @@ if __name__ == "__main__":
     define_ast("Generated", base_name, {
         "Binary": f"{base_name} Left, {base_name} Right, Token Operator",
         "Grouping": f"{base_name} Expression",
-        "Literal": f"object Value",
+        "Literal": f"object? Value",
         "Unary": f"{base_name} Expression, Token Operator",
     })
