@@ -6,6 +6,7 @@ from typing import Callable
 TAB = " " * 4
 GMT_PLUS_THREE = timezone(timedelta(hours=3))
 
+
 def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: str):
     f.writeln = lambda x: f.write(x + "\n")
     f.writeln(f"public interface {visitor_interface_name}<out TResult>")
@@ -44,16 +45,16 @@ public abstract class {base_class}
             define_type(f, base_class, name, names, default_visitor_name)
 
 
-def fields_as_parameters(fields: list[tuple], 
+def fields_as_parameters(fields: list[tuple],
                          name_mangle: Callable[[str], str] = lambda x: x,
                          type_mangle: Callable[[str], str] = lambda x: x) -> str:
     result = "("
     for index in range(len(fields)):
         field_type, field_name = fields[index]
         actual_type = type_mangle(field_type)
-        result += actual_type 
+        result += actual_type
         # Prevent from having " Name" 
-        if len(actual_type) > 0: 
+        if len(actual_type) > 0:
             result += " "
         result += name_mangle(field_name)
         if index == len(fields) - 1:
@@ -63,20 +64,22 @@ def fields_as_parameters(fields: list[tuple],
 
     return result
 
-def type_to_csharp_name(t: str) -> str: 
+
+def type_to_csharp_name(t: str) -> str:
     t = t.lower()
     result = ""
     if t in ["operator", "if", "switch"]:
-        result += "@" 
+        result += "@"
     return result + t
-
-
 
 
 def define_type(f: TextIOWrapper, base_class_name: str, this_class_name: str, fields: list[tuple], visitor_name: str):
     f.writeln = lambda x: f.write(x + "\n")
+
     as_parameters = fields_as_parameters(fields, type_to_csharp_name)
+
     f.writeln(f"public class {this_class_name}{as_parameters} : {base_class_name} \n{{")
+
     for field_type, field_name in fields:
         f.writeln(f"{TAB}public {field_type} {field_name} {{ get; set; }} = {type_to_csharp_name(field_name)};")
 
@@ -84,13 +87,18 @@ def define_type(f: TextIOWrapper, base_class_name: str, this_class_name: str, fi
 
     # Visitor 
     f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor_name}<TResult> visitor) =>")
-    f.writeln(f"{TAB}{TAB}visitor.Visit<{this_class_name}>(this);\n")
+    f.writeln(f"{TAB * 2}visitor.Visit<{this_class_name}>(this);\n")
 
     # Deconstructor 
     discard = lambda _: ''
-    deconstruct_parameters = fields_as_parameters(fields, type_mangle=lambda x: 'out ' + x, name_mangle=type_to_csharp_name)
+    deconstruct_parameters = fields_as_parameters(fields, type_mangle=lambda x: 'out ' + x,
+                                                  name_mangle=type_to_csharp_name)
+    left_side = fields_as_parameters(fields, type_to_csharp_name, discard)
+    right_side = fields_as_parameters(fields, type_mangle=discard)
+
     f.writeln(f"{TAB}public void Deconstruct{deconstruct_parameters} =>")
-    f.writeln(f"{TAB*2}{fields_as_parameters(fields, type_to_csharp_name, discard)} = {fields_as_parameters(fields, type_mangle= lambda _: '')};")
+    f.writeln(f"{TAB * 2}{left_side} = {right_side};")
+
     f.writeln("}\n")
 
 
