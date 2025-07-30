@@ -33,10 +33,13 @@ namespace cslox.Ast.Generated;
 public abstract class {base_class} 
 {{
     public abstract TResult Accept<TResult>({default_visitor_name}<TResult> visitor);
-}}
-
+    
+    // Current inheritors:
 """
-        f.write(code)
+        for name in types.keys(): 
+            code += f"{TAB}//{TAB}{name}\n"
+            
+        f.write(code  + "}\n\n")
         define_visitor(f, base_class, default_visitor_name)
         for name, fields in types.items():
             fields = fields.strip().split(", ")
