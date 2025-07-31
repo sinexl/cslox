@@ -39,6 +39,11 @@ public class Lexer
         _tokenStart = _state;
     }
 
+    public static Lexer FromFile(string filePath)
+    {
+        return new Lexer(File.ReadAllText(filePath), filePath); 
+    }
+
     public List<Error> Errors { get; } = new();
     public string Src { get; init; }
 
