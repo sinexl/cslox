@@ -27,8 +27,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Unary(var inner, var op):
                 return Parenthesise(op.Lexeme, inner);
         }
-
-        throw new UnreachableException("Not all cases are covered for some reason");
+        throw new NotImplementedException("Not all cases are handled"); 
     }
 
     private string Parenthesise(string name, params IEnumerable<Expression> expressions)
