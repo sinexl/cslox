@@ -11,7 +11,7 @@ class Ast:
     name: str
     fields: list[tuple[str, str]] | None
     inheritors: list["Ast"] | None
-    abstract: bool
+    is_abstract: bool
 
     def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, abstract: bool = False,
                  inheritors: list["Ast"] | None = None):
@@ -29,7 +29,7 @@ class Ast:
             self.fields = fields
         self.name = name
         self.inheritors = inheritors
-        self.abstract = abstract
+        self.is_abstract = abstract
 
     def __str__(self):
         return self.to_str(indent=0)
@@ -42,6 +42,11 @@ class Ast:
             # print(f"{TAB*indent}{TAB}Inheritor: {inheritor.name}") 
             result += inheritor.to_str(indent + 1)
         return result
+
+
+def get_ast_fields_or(ast: Ast | None, or_) -> list[tuple[str, str]] | None:
+    if ast is None or ast.fields is None: return or_
+    return ast.fields
 
 
 def define_file_header(f: TextIOWrapper):
@@ -64,6 +69,28 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
     #     f.writeln(f"    T Visit({type_name} _{type_name.lower()});")
     f.writeln(f"{TAB}TResult Visit<TExpression>(TExpression expression) where TExpression : {base_class};")
     f.writeln("}\n")
+
+
+def define_ast(f: TextIOWrapper, base_ast: Ast):
+    f.writeln = lambda x: f.write(x + "\n")
+
+    def define_ast_impl(ast: Ast, ancestor: Ast | None = None):
+        abstract_str = "abstract " if ast.is_abstract else ""
+        inheritance = f": {ancestor.name}" if ancestor is not None else ""
+        ancestor_fields = get_ast_fields_or(ancestor, [])
+        # Fields from both ancestor and derived class. Needed because constructors aren't inherited in C#. 
+        constructor_fields = ancestor_fields + get_ast_fields_or(ast, [])
+
+        as_parameters = fields_as_parameters(constructor_fields, type_to_csharp_name)
+        ancestor_parameters = fields_as_parameters(ancestor_fields, type_to_csharp_name, type_mangle=discard)
+
+        f.writeln(f"public {abstract_str}class {ast.name}{as_parameters} {inheritance}{ancestor_parameters}\n{{")
+        
+        f.writeln("}\n")
+        for inheritor in ast.inheritors or []:
+            define_ast_impl(inheritor, ast)
+
+    define_ast_impl(base_ast)
 
 
 def define_ast_old(folder: str, base_class: str, visitor_name: str, types: dict[str, str | None]):
@@ -98,10 +125,15 @@ public abstract class {base_class}
             define_type_old(f, base_class, name, names, visitor_name)
 
 
+def discard(_: str) -> str:
+    return ''
+
+
 def fields_as_parameters(fields: list[tuple] | None,
                          name_mangle: Callable[[str], str] = lambda x: x,
                          type_mangle: Callable[[str], str] = lambda x: x) -> str:
     if fields is None: return "";
+    if len(fields) == 0: return "";
     result = "("
     for index in range(len(fields)):
         field_type, field_name = fields[index]
@@ -158,11 +190,11 @@ def define_type_old(f: TextIOWrapper, base_class_name: str, this_class_name: str
     f.writeln("}\n")
 
 
-if __name__ == "__main__":
+def main():
     output_folder = "Generated"
     base_name = "Expression"
     binary_name = "Binary"
-    Visitor_name = "IExpressionVisitor"
+    visitor_name = "IExpressionVisitor"
 
     ast = Ast(base_name, None, abstract=True, inheritors=[
         Ast("Grouping", f"{base_name} Expression"),
@@ -175,27 +207,30 @@ if __name__ == "__main__":
             Ast("Division", None),
         ])
     ])
-    os.makedirs(output_folder, exist_ok=True) 
-    with open(f"{output_folder}/{base_name}.cs", "w") as file: 
-        define_file_header(file) 
-        define_ast(ast)
+    os.makedirs(output_folder, exist_ok=True)
     print(ast)
-    
-    exit(0)
+    with open(f"{output_folder}/{base_name}.cs", "w") as file:
+        define_file_header(file)
+        define_ast(file, ast)
+
 
     # define_visitor(f, "Expression", Visitor_name)
-    define_ast_old(
-        output_folder, base_name, Visitor_name, {
-            binary_name: None,
-            "Grouping": f"{base_name} Expression",
-            "Literal": f"object? Value",
-            "Unary": f"{base_name} Expression, Token Operator",
-        })
-    define_ast_old(
-        output_folder, binary_name, Visitor_name, {
-            "Addition": f"{base_name} Left, {base_name} Right",
-            "Subtraction": f"{base_name} Left, {base_name} Right",
-            "Multiplication": f"{base_name} Left, {base_name} Right",
-            "Division": f"{base_name} Left, {base_name} Right",
-        }
-    )
+    # define_ast_old(
+    #     output_folder, base_name, visitor_name, {
+    #         binary_name: None,
+    #         "Grouping": f"{base_name} Expression",
+    #         "Literal": f"object? Value",
+    #         "Unary": f"{base_name} Expression, Token Operator",
+    #     })
+    # define_ast_old(
+    #     output_folder, binary_name, Visitor_name, {
+    #         "Addition": f"{base_name} Left, {base_name} Right",
+    #         "Subtraction": f"{base_name} Left, {base_name} Right",
+    #         "Multiplication": f"{base_name} Left, {base_name} Right",
+    #         "Division": f"{base_name} Left, {base_name} Right",
+    #     }
+    # )
+
+
+if __name__ == "__main__":
+    main()
