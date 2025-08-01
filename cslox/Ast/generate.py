@@ -193,7 +193,6 @@ def define_type_old(f: TextIOWrapper, base_class_name: str, this_class_name: str
 def main():
     output_folder = "Generated"
     base_name = "Expression"
-    binary_name = "Binary"
     visitor_name = "IExpressionVisitor"
 
     ast = Ast(base_name, None, abstract=True, inheritors=[
@@ -211,6 +210,7 @@ def main():
     print(ast)
     with open(f"{output_folder}/{base_name}.cs", "w") as file:
         define_file_header(file)
+        define_visitor(file, base_name, visitor_name)
         define_ast(file, ast)
 
 
