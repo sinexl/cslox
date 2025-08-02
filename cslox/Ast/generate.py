@@ -80,10 +80,10 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
 def define_ast(f: TextIOWrapper, base_ast: Ast):
     f.writeln = lambda x: f.write(x + "\n")
 
-    def define_ast_impl(ast: Ast, ancestor: Ast | None = None):
+    def define_ast_impl(ast: Ast):
         abstract_str = "abstract " if ast.is_abstract else ""
-        inheritance = f": {ancestor.name}" if ancestor is not None else ""
-        ancestor_fields = get_ast_fields_or(ancestor, [])
+        inheritance = f": {ast.ancestor.name}" if ast.ancestor is not None else ""
+        ancestor_fields = get_ast_fields_or(ast.ancestor, [])
         # Fields from both ancestor and derived class. Needed because constructors aren't inherited in C#. 
         constructor_fields = ancestor_fields + get_ast_fields_or(ast, [])
 
@@ -91,10 +91,15 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
         ancestor_parameters = fields_as_parameters(ancestor_fields, type_to_csharp_name, type_mangle=discard)
 
         f.writeln(f"public {abstract_str}class {ast.name}{as_parameters} {inheritance}{ancestor_parameters}\n{{")
-        
+        # if ast.fields is not None:
+        #     for field_type, field_name in ast.fields:
+        #         f.writeln(f"{TAB}public {field_type} {field_name} {{ get; set; }} = {type_to_csharp_name(field_name)};")
+        # f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor_name}<TResult> visitor) =>")
+        # f.writeln(f"{TAB * 2}visitor.Visit<{ast.name}>(this);\n")
+        # 
         f.writeln("}\n")
         for inheritor in ast.inheritors or []:
-            define_ast_impl(inheritor, ast)
+            define_ast_impl(inheritor)
 
     define_ast_impl(base_ast)
 
