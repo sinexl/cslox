@@ -4,10 +4,15 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from io import TextIOWrapper
+from types import NoneType
 from typing import Callable
 
 TAB = " " * 4
 GMT_PLUS_THREE = timezone(timedelta(hours=3))
+
+
+@dataclass
+class Inherited: pass;
 
 
 class Ast:
@@ -16,8 +21,10 @@ class Ast:
     ancestor: Ast | None
     inheritors: list[Ast] | None
     is_abstract: bool
+    visitor_name: str | Inherited | None
 
-    def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, custom_code=None, abstract: bool = False,
+    def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, visitor_name: str = Inherited,
+                 abstract: bool = False,
                  inheritors: list["Ast"] | None = None):
         if type(fields) is str:
             self.fields = []
@@ -33,6 +40,7 @@ class Ast:
         for i in self.inheritors or []:
             i.ancestor = self
         self.is_abstract = abstract
+        self.visitor_name = visitor_name
 
     def __str__(self):
         return self.to_str(indent=0)
@@ -41,13 +49,21 @@ class Ast:
         result = ""
         result += f"{TAB * indent}{self.name}"
         result += fields_as_parameters(self.fields)
+        # Todo: Use into format arguments if possible instead of comments
         # if self.ancestor is not None: 
         #     result += f" : {self.ancestor.name}"
+        # if visitor := self.get_visitor_name() is not None:  
+        #     result += f" {{ Accept({visitor}) }}" 
         result += "\n"
         for inheritor in self.inheritors or []:
             # print(f"{TAB*indent}{TAB}Inheritor: {inheritor.name}") 
             result += inheritor.to_str(indent + 1)
         return result
+
+    def get_visitor_name(self) -> str | None:
+        if self.visitor_name is None: return None
+        if self.visitor_name is Inherited: return self.ancestor.get_visitor_name()
+        return self.visitor_name 
 
 
 def get_ast_fields_or(ast: Ast | None, or_) -> list[tuple[str, str]] | None:
@@ -92,14 +108,14 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
         ancestor_parameters = fields_as_parameters(ancestor_fields, type_to_csharp_name, type_mangle=discard)
 
         f.writeln(f"public {abstract_str}class {ast.name}{as_parameters} {inheritance}{ancestor_parameters}\n{{")
-        
+
         # Fields 
         if ast.fields is not None:
             for field_type, field_name in ast.fields:
                 f.writeln(f"{TAB}public {field_type} {field_name} {{ get; set; }} = {type_to_csharp_name(field_name)};")
-                
+
         # Deconstructor 
-        if len(constructor_fields) > 0: 
+        if len(constructor_fields) > 0:
             deconstruct_parameters = fields_as_parameters(constructor_fields, type_mangle=lambda x: 'out ' + x,
                                                           name_mangle=type_to_csharp_name)
             left_side = fields_as_parameters(constructor_fields, type_to_csharp_name, discard)
@@ -109,7 +125,15 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             #  since not all classes actually shadow it. 
             f.writeln(f"{TAB}public new void Deconstruct{deconstruct_parameters} =>")
             f.writeln(f"{TAB * 2}{left_side} = {right_side};")
-        
+
+        # Visitor 
+        visitor = ast.get_visitor_name() 
+        if visitor is not None: 
+            if ast.is_abstract and ast.ancestor is None:  # TODO: ast.ancestor is None is a hack
+               f.writeln(f"{TAB}public abstract TResult Accept<TResult>({visitor}<TResult> visitor);")
+            else:
+                f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor}<TResult> visitor) =>")
+                f.writeln(f"{TAB * 2}visitor.Visit<{ast.name}>(this);\n")
         f.writeln("}\n")
         for inheritor in ast.inheritors or []:
             define_ast_impl(inheritor)
@@ -212,7 +236,7 @@ def main():
     base_name = "Expression"
     visitor_name = "IExpressionVisitor"
 
-    ast = Ast(base_name, None, abstract=True, inheritors=[
+    ast = Ast(base_name, None, abstract=True, visitor_name=visitor_name, inheritors=[
         Ast("Grouping", f"{base_name} Expression"),
         Ast("Literal", f"object? Value"),
         Ast("Unary", f"{base_name} Expression, Token Operator"),
