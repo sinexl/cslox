@@ -41,7 +41,7 @@ public class Lexer
 
     public static Lexer FromFile(string filePath)
     {
-        return new Lexer(File.ReadAllText(filePath), filePath); 
+        return new Lexer(File.ReadAllText(filePath), filePath);
     }
 
     public List<Error> Errors { get; } = new();
@@ -364,6 +364,13 @@ public static class Extensions
         TokenType.Number or TokenType.String => true,
         _ => false
     };
+
+    public static IEnumerable<T> ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+    {
+        foreach (var x in enumerable)
+            action(x);
+        return enumerable; 
+    }
 
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
     public static bool IsId(this char c) => char.IsLetter(c) || char.IsDigit(c) || c == '_';

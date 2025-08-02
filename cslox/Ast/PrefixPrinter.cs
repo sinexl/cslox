@@ -15,8 +15,17 @@ public class PrefixPrinter : IExpressionVisitor<string>
     {
         switch (expression)
         {
-            case Binary (var left, var right, var op):
-                return Parenthesise(op.Lexeme, left, right);
+            case Binary (var left, var right) a:
+            {
+                return a switch
+                {
+                    Addition => Parenthesise("+", left, right),
+                    Multiplication => Parenthesise("*", left, right),
+                    Subtraction => Parenthesise("-", left, right),
+                    Division => Parenthesise("/", left, right),
+                    _ => throw new UnreachableException("Not all cases are handled")
+                };
+            }
             case Literal (var value):
             {
                 if (value is null) return "nil";
@@ -28,12 +37,12 @@ public class PrefixPrinter : IExpressionVisitor<string>
                 return Parenthesise(op.Lexeme, inner);
         }
 
-        throw new UnreachableException("Not all cases are covered for some reason");
+        throw new UnreachableException("Not all cases are handled");
     }
 
     private string Parenthesise(string name, params IEnumerable<Expression> expressions)
     {
-        expressions = expressions.ToArray(); 
+        expressions = expressions.ToArray();
         var sb = new StringBuilder();
         sb.Append("(")
             .Append(name)
@@ -44,17 +53,16 @@ public class PrefixPrinter : IExpressionVisitor<string>
             if (index != expressions.Count() - 1) sb.Append(" ");
         }
 
-        sb.Append(")"); 
-        return sb.ToString(); 
+        sb.Append(")");
+        return sb.ToString();
     }
 
     public static void Test()
     {
         var self = new PrefixPrinter();
-        var expression = new Binary(
-            new Literal(10), 
-            new Literal(12), 
-            new Token(TokenType.Minus, "-", null, new SourceLocation()) 
+        var expression = new Subtraction(
+            new Literal(10),
+            new Literal(12)
         );
 
         Console.WriteLine(self.Print(expression));
