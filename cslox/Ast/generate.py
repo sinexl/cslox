@@ -45,19 +45,22 @@ class Ast:
     def __str__(self):
         return self.to_str(indent=0)
 
-    def to_str(self, indent: int) -> str:
-        result = ""
-        result += f"{TAB * indent}{self.name}"
-        result += fields_as_parameters(self.fields)
-        # Todo: Use into format arguments if possible instead of comments
-        # if self.ancestor is not None: 
-        #     result += f" : {self.ancestor.name}"
-        # if visitor := self.get_visitor_name() is not None:  
-        #     result += f" {{ Accept({visitor}) }}" 
-        result += "\n"
+    def __format__(self, format_spec: str) -> str:
+        show_visitor = 'v' in format_spec
+        show_ancestor = 'a' in format_spec
+        show_fields = 'f' in format_spec
+        return self.to_str(0, show_ancestor, show_visitor, show_fields)
+
+    def to_str(self, indent=0, show_ancestor=False, show_visitor=False, show_fields=False) -> str:
+        base = f" : {self.ancestor.name}" if show_ancestor and self.ancestor else ""
+        visitor_name = self.get_visitor_name() if show_visitor else None
+        visitor = f" {{ Accept({visitor_name}) }}" if visitor_name else ""
+        fields = fields_as_parameters(self.fields) + " " if show_fields else ""
+
+        result = f"{TAB * indent}{self.name}"
+        result += f"{base}{fields}{visitor}\n"
         for inheritor in self.inheritors or []:
-            # print(f"{TAB*indent}{TAB}Inheritor: {inheritor.name}") 
-            result += inheritor.to_str(indent + 1)
+            result += inheritor.to_str(indent + 1, show_ancestor, show_visitor, show_fields)
         return result
 
     def get_visitor_name(self) -> str | None:
@@ -192,7 +195,7 @@ def main():
         ])
     ])
     os.makedirs(output_folder, exist_ok=True)
-    print(ast)
+    print(f"{ast:f}")
     with open(f"{output_folder}/{base_name}.cs", "w") as file:
         define_file_header(file)
         define_visitor(file, base_name, visitor_name)
