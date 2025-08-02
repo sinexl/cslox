@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from io import TextIOWrapper
 from typing import Callable
@@ -10,16 +13,13 @@ GMT_PLUS_THREE = timezone(timedelta(hours=3))
 class Ast:
     name: str
     fields: list[tuple[str, str]] | None
-    inheritors: list["Ast"] | None
+    ancestor: Ast | None
+    inheritors: list[Ast] | None
     is_abstract: bool
 
-    def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, abstract: bool = False,
+    def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, custom_code=None, abstract: bool = False,
                  inheritors: list["Ast"] | None = None):
         if type(fields) is str:
-            # self.fields = [
-            #     tuple(pair.split())
-            #     for pair in fields.split(", ")
-            # ]
             self.fields = []
             for field in fields.strip().split(", "):
                 assert len(field.split(" ")) == 2, f"Invalid field: {field}"
@@ -29,6 +29,9 @@ class Ast:
             self.fields = fields
         self.name = name
         self.inheritors = inheritors
+        self.ancestor = None 
+        for i in self.inheritors or []:
+            i.ancestor = self
         self.is_abstract = abstract
 
     def __str__(self):
@@ -37,7 +40,10 @@ class Ast:
     def to_str(self, indent: int) -> str:
         result = ""
         result += f"{TAB * indent}{self.name}"
-        result += fields_as_parameters(self.fields) + "\n"
+        result += fields_as_parameters(self.fields)
+        # if self.ancestor is not None: 
+        #     result += f" : {self.ancestor.name}"
+        result += "\n"
         for inheritor in self.inheritors or []:
             # print(f"{TAB*indent}{TAB}Inheritor: {inheritor.name}") 
             result += inheritor.to_str(indent + 1)
