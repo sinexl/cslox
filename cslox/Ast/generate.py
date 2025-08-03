@@ -194,9 +194,10 @@ def main():
             Ast("Multiplication", None),
             Ast("Division", None),
             # Comparison 
-            Ast("Equality", None),
-            Ast("Inequality", None),
-            Ast("Greater", None),
+            Ast("Equality", None), Ast("Inequality", None),
+            Ast("Greater", None), Ast("GreaterEqual", None),
+            Ast("Less", None), Ast("LessEqual", None),
+            
         ])
     ])
     os.makedirs(output_folder, exist_ok=True)
