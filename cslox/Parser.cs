@@ -31,11 +31,17 @@ Precedence & Associativity  (from the lowest precedence to highest)
 public class Parser
 {
     private readonly List<Token> _tokens;
-    private int _current;
+
+    public struct State
+    {
+        public int Current { get; set; }
+    }
+
+    private State _state;
 
     public Parser(IEnumerable<Token> tokens)
     {
-        _current = 0;
+        _state.Current = 0;
         _tokens = tokens.ToList();
     }
 
@@ -48,7 +54,6 @@ public class Parser
 
 
     // ==, != 
-    
     public Expression ParseEquality()
     {
         Expression left = ParseComparison();
@@ -129,10 +134,10 @@ public class Parser
     // number, string, nil, true, false
     private Expression ParsePrimary()
     {
-        if (Match(TokenType.False)) return new Literal(false); 
-        if (Match(TokenType.True)) return new Literal(true);  
-        if (Match(TokenType.Nil)) return new Literal(null);  
-        
+        if (Match(TokenType.False)) return new Literal(false);
+        if (Match(TokenType.True)) return new Literal(true);
+        if (Match(TokenType.Nil)) return new Literal(null);
+
         if (Match(TokenType.Number, TokenType.String))
         {
             return new Literal(PeekToken().Literal);
@@ -171,27 +176,30 @@ public class Parser
     [Pure]
     private Token NextToken()
     {
-        return _tokens[_current++];
+        return _tokens[_state.Current++];
     }
 
     private Token PeekToken()
     {
-        return _tokens[_current];
+        return _tokens[_state.Current];
     }
 
     private Token PeekPrevious()
     {
-        return _tokens[_current - 1];
+        return _tokens[_state.Current - 1];
     }
 
     private bool IsEof() => PeekToken().Type == TokenType.Eof;
+
+    public State SaveState() => _state; 
+    private void RestoreState(State state) => _state = state; 
 
     public static void Test()
     {
         var printer = new PrefixPrinter();
         var tokens = Lexer.FromFile("./Tests/parser.cslox").Accumulate().ToList();
         var self = new Parser(tokens);
-        tokens.ForEach(Console.WriteLine); 
+        tokens.ForEach(Console.WriteLine);
         var expression = self.ParseExpression();
 
         Console.WriteLine(printer.Print(expression));
