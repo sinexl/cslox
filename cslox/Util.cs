@@ -2,15 +2,13 @@ namespace cslox;
 
 public class Util
 {
-    public static void Report(SourceLocation loc, string? where, string message)
+    public static void Report(SourceLocation loc, string message)
     {
-        if (!string.IsNullOrEmpty(where))
-        {
-            Console.Error.WriteLine($"{loc}: ({where}) {message}");
-        }
-        else
-        {
-            Console.Error.WriteLine($"{loc}: {message}");
-        }
+        Console.Error.WriteLine($"{loc}: {message}");
+    }
+
+    public static void Report(SourceLocation loc, string where, string message)
+    {
+        Console.Error.WriteLine($"{loc}: ({where}) {message}");
     }
 }

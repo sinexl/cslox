@@ -188,10 +188,15 @@ def main():
         Ast("Literal", f"object? Value"),
         Ast("Unary", f"{base_name} Expression, Token Operator"),
         Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
+            # Arithmetics  
             Ast("Addition", None),
             Ast("Subtraction", None),
             Ast("Multiplication", None),
             Ast("Division", None),
+            # Comparison 
+            Ast("Equality", None),
+            Ast("Inequality", None),
+            Ast("Greater", None),
         ])
     ])
     os.makedirs(output_folder, exist_ok=True)
