@@ -45,7 +45,7 @@ public class Parser
         _tokens = tokens.ToList();
     }
 
-    public Expression ParseExpression()
+    public Expression? ParseExpression()
     {
         return ParseEquality();
     }
@@ -54,13 +54,15 @@ public class Parser
 
 
     // ==, != 
-    public Expression ParseEquality()
+    public Expression? ParseEquality()
     {
-        Expression left = ParseComparison();
+        Expression? left = ParseComparison();
+        if (left is null) return null; 
         while (Match(TokenType.BangEqual, TokenType.EqualEqual))
         {
             Token op = PeekPrevious();
-            Expression right = ParseComparison();
+            Expression? right = ParseComparison();
+            if (right is null) return null;
             left = op.Type switch
             {
                 TokenType.EqualEqual => new Equality(left, right),
@@ -73,13 +75,16 @@ public class Parser
     }
 
     // >=, >, <, <= 
-    private Expression ParseComparison()
+    private Expression? ParseComparison()
     {
-        Expression left = ParseTerm();
+        Expression? left = ParseTerm();
+        if (left is null) return null;
+        
         while (Match(TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual))
         {
             Token op = PeekPrevious();
-            Expression right = ParseTerm();
+            Expression? right = ParseTerm();
+            if (right is null) return null; 
             left = op.Type switch
             {
                 TokenType.Greater => new Greater(left, right),
@@ -95,13 +100,15 @@ public class Parser
 
 
     // + -
-    private Expression ParseTerm()
+    private Expression? ParseTerm()
     {
-        Expression left = ParseFactor();
+        Expression? left = ParseFactor();
+        if (left is null) return null;
         while (Match(TokenType.Minus, TokenType.Plus))
         {
             Token op = PeekPrevious();
-            Expression right = ParseFactor();
+            Expression? right = ParseFactor();
+            if (right is null) return null;
             left = op.Type switch
             {
                 TokenType.Plus => new Addition(left, right),
@@ -114,13 +121,15 @@ public class Parser
     }
 
     // * /
-    private Expression ParseFactor()
+    private Expression? ParseFactor()
     {
-        Expression left = ParseUnary();
+        Expression? left = ParseUnary(); 
+        if (left is null) return null; 
         while (Match(TokenType.Slash, TokenType.Star))
         {
             Token op = PeekPrevious();
-            Expression right = ParseUnary();
+            Expression? right = ParseUnary();
+            if (right is null) return null; 
             left = op.Type switch
             {
                 TokenType.Star => new Multiplication(left, right),
@@ -133,20 +142,22 @@ public class Parser
     }
 
     // - ! 
-    private Expression ParseUnary()
+    private Expression? ParseUnary()
     {
         if (Match(TokenType.Bang, TokenType.Minus))
         {
             Token op = PeekPrevious();
-
-            return new Unary(ParseUnary(), op);
+            Expression? inner = ParseUnary();
+            if (inner is null) return null;
+            
+            return new Unary(inner, op);
         }
 
         return ParsePrimary();
     }
 
     // number, string, nil, true, false
-    private Expression ParsePrimary()
+    private Expression? ParsePrimary()
     {
         if (Match(TokenType.False)) return new Literal(false);
         if (Match(TokenType.True)) return new Literal(true);
@@ -155,14 +166,11 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal);
 
-        if (!Match(TokenType.LeftParen))
-        {
-            // TODO: Proper error handling 
-            throw new Exception($"Unexpected token: {PeekToken()}");
-        }
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
 
-        Expression expr = ParseExpression();
-        if (!Match(TokenType.RightParen)) throw new Exception($"Expected ')'");
+        Expression? expr = ParseExpression();
+        if (expr is null) return null;
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;
         return new Grouping(expr);
     }
 
@@ -194,6 +202,7 @@ public class Parser
     public State SaveState() => _state;
     private void RestoreState(State state) => _state = state;
 
+    [Pure]
     private bool ExpectAndConsume(TokenType expected)
     {
         if (IsEof()) return false;
@@ -236,6 +245,11 @@ public class Parser
         tokens.ForEach(Console.WriteLine);
         var expression = self.ParseExpression();
 
-        Console.WriteLine(printer.Print(expression));
+        if (expression is null)
+        {
+            Console.Error.WriteLine("Parse Error occured. Exiting...");
+            Environment.Exit(1);
+        } 
+        Console.WriteLine(printer.Print(expression ));
     }
 }
