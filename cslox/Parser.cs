@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Numerics;
+using System.Text;
 using cslox.Ast;
 using cslox.Ast.Generated;
 
@@ -57,19 +57,16 @@ public class Parser
     public Expression ParseEquality()
     {
         Expression left = ParseComparison();
-
         while (Match(TokenType.BangEqual, TokenType.EqualEqual))
         {
             Token op = PeekPrevious();
             Expression right = ParseComparison();
-            // left = new Binary(left, right, op);
-            switch (op.Type) 
+            left = op.Type switch
             {
-                // case TokenType.EqualEqual: 
-                //     left = new (left, right); break; 
-                // case TokenType.BangEqual:  
-                //     left = new 
-            } 
+                TokenType.EqualEqual => new Equality(left, right),
+                TokenType.BangEqual => new Inequality(left, right),
+                _ => throw new UnreachableException("Unreachable")
+            };
         }
 
         return left;
@@ -83,7 +80,14 @@ public class Parser
         {
             Token op = PeekPrevious();
             Expression right = ParseTerm();
-            // left = new Binary(left, right, op);
+            left = op.Type switch
+            {
+                TokenType.Greater => new Greater(left, right),
+                TokenType.GreaterEqual => new GreaterEqual(left, right),
+                TokenType.Less => new Less(left, right),
+                TokenType.LessEqual => new LessEqual(left, right),
+                _ => throw new UnreachableException("Unreachable")
+            };
         }
 
         return left;
@@ -98,7 +102,12 @@ public class Parser
         {
             Token op = PeekPrevious();
             Expression right = ParseFactor();
-            // left = new Binary(left, right, op);
+            left = op.Type switch
+            {
+                TokenType.Plus => new Addition(left, right),
+                TokenType.Minus => new Subtraction(left, right),
+                _ => throw new UnreachableException("Unreachable")
+            };
         }
 
         return left;
@@ -112,7 +121,12 @@ public class Parser
         {
             Token op = PeekPrevious();
             Expression right = ParseUnary();
-            // left = new Binary(left, right, op);
+            left = op.Type switch
+            {
+                TokenType.Star => new Multiplication(left, right),
+                TokenType.Slash => new Division(left, right),
+                _ => throw new UnreachableException("Unreachable")
+            };
         }
 
         return left;
@@ -139,9 +153,7 @@ public class Parser
         if (Match(TokenType.Nil)) return new Literal(null);
 
         if (Match(TokenType.Number, TokenType.String))
-        {
             return new Literal(PeekToken().Literal);
-        }
 
         if (!Match(TokenType.LeftParen))
         {
@@ -168,31 +180,19 @@ public class Parser
         return false;
     }
 
-    private void SkipToken()
-    {
-        _ = NextToken();
-    }
+    private void SkipToken() => _ = NextToken();
 
     [Pure]
-    private Token NextToken()
-    {
-        return _tokens[_state.Current++];
-    }
+    private Token NextToken() => _tokens[_state.Current++];
 
-    private Token PeekToken()
-    {
-        return _tokens[_state.Current];
-    }
+    private Token PeekToken() => _tokens[_state.Current];
 
-    private Token PeekPrevious()
-    {
-        return _tokens[_state.Current - 1];
-    }
+    private Token PeekPrevious() => _tokens[_state.Current - 1];
 
     private bool IsEof() => PeekToken().Type == TokenType.Eof;
 
-    public State SaveState() => _state; 
-    private void RestoreState(State state) => _state = state; 
+    public State SaveState() => _state;
+    private void RestoreState(State state) => _state = state;
 
     public static void Test()
     {
