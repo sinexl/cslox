@@ -277,9 +277,13 @@ public class Lexer
         return new Token(type, lexeme, literal, _tokenStart.ToSourceLocation(FilePath));
     }
 
-    private Token CreateToken(TokenType type, object? literal = null)
+    private Token CreateToken(TokenType type)
     {
-        return new Token(type, Src[_state.Current].ToString(), literal, _tokenStart.ToSourceLocation(FilePath));
+        var lexeme = type.Terminal();
+        if (lexeme is null)
+            throw new ArgumentException(
+                "Use other overload of CreateToken for Tokens that have more than 1 possible lexeme");
+        return new Token(type, lexeme, null, _tokenStart.ToSourceLocation(FilePath));
     }
 
     [Pure]
@@ -369,7 +373,7 @@ public static class Extensions
     {
         foreach (var x in enumerable)
             action(x);
-        return enumerable; 
+        return enumerable;
     }
 
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';

@@ -87,9 +87,50 @@ public enum TokenType
 
 public static class TokenTypeExtensions
 {
-    public static string Humanize(this TokenType type)
-    {
-        return type switch
+    public static string? Terminal(this TokenType type) =>
+        type switch
+        {
+            TokenType.LeftParen => "(",
+            TokenType.RightParen => ")",
+            TokenType.LeftBrace => "{",
+            TokenType.RightBrace => "}",
+            TokenType.Comma => ",",
+            TokenType.Dot => ".",
+            TokenType.Minus => "-",
+            TokenType.Plus => "+",
+            TokenType.Semicolon => ";",
+            TokenType.Slash => "/",
+            TokenType.Star => "*",
+            TokenType.Bang => "!",
+            TokenType.BangEqual => "!=",
+            TokenType.Equal => "=",
+            TokenType.EqualEqual => "==",
+            TokenType.Greater => ">",
+            TokenType.GreaterEqual => ">=",
+            TokenType.Less => "<",
+            TokenType.LessEqual => "<=",
+            TokenType.And => "and",
+            TokenType.Class => "class",
+            TokenType.Else => "else",
+            TokenType.False => "false",
+            TokenType.Fun => "fun",
+            TokenType.For => "for",
+            TokenType.If => "if",
+            TokenType.Nil => "nil",
+            TokenType.Or => "or",
+            TokenType.Print => "print",
+            TokenType.Return => "return",
+            TokenType.Super => "super",
+            TokenType.This => "this",
+            TokenType.True => "true",
+            TokenType.Var => "var",
+            TokenType.While => "while",
+            TokenType.Identifier or TokenType.String or TokenType.Number or TokenType.Eof => null,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
+        };
+
+    public static string Humanize(this TokenType type) =>
+        type switch
         {
             TokenType.Eof => "end of file",
             TokenType.LeftParen => "opening parenthesis",
@@ -124,5 +165,4 @@ public static class TokenTypeExtensions
                 TokenType.While => $"`{type.ToString().ToLower()}` keyword",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
-    }
 }
