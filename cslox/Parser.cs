@@ -57,7 +57,7 @@ public class Parser
     public Expression? ParseEquality()
     {
         Expression? left = ParseComparison();
-        if (left is null) return null; 
+        if (left is null) return null;
         while (Match(TokenType.BangEqual, TokenType.EqualEqual))
         {
             Token op = PeekPrevious();
@@ -79,12 +79,12 @@ public class Parser
     {
         Expression? left = ParseTerm();
         if (left is null) return null;
-        
+
         while (Match(TokenType.Greater, TokenType.GreaterEqual, TokenType.Less, TokenType.LessEqual))
         {
             Token op = PeekPrevious();
             Expression? right = ParseTerm();
-            if (right is null) return null; 
+            if (right is null) return null;
             left = op.Type switch
             {
                 TokenType.Greater => new Greater(left, right),
@@ -123,13 +123,13 @@ public class Parser
     // * /
     private Expression? ParseFactor()
     {
-        Expression? left = ParseUnary(); 
-        if (left is null) return null; 
+        Expression? left = ParseUnary();
+        if (left is null) return null;
         while (Match(TokenType.Slash, TokenType.Star))
         {
             Token op = PeekPrevious();
             Expression? right = ParseUnary();
-            if (right is null) return null; 
+            if (right is null) return null;
             left = op.Type switch
             {
                 TokenType.Star => new Multiplication(left, right),
@@ -149,7 +149,7 @@ public class Parser
             Token op = PeekPrevious();
             Expression? inner = ParseUnary();
             if (inner is null) return null;
-            
+
             return new Unary(inner, op);
         }
 
@@ -239,7 +239,7 @@ public class Parser
 
     public static void Test()
     {
-        var printer = new PrefixPrinter();
+        var prefixPrinter = new PrefixPrinter();
         var tokens = Lexer.FromFile("./Tests/parser.cslox").Accumulate().ToList();
         var self = new Parser(tokens);
         tokens.ForEach(Console.WriteLine);
@@ -249,7 +249,9 @@ public class Parser
         {
             Console.Error.WriteLine("Parse Error occured. Exiting...");
             Environment.Exit(1);
-        } 
-        Console.WriteLine(printer.Print(expression ));
+        }
+
+        Console.WriteLine(expression);
+        Console.WriteLine(prefixPrinter.Print(expression));
     }
 }
