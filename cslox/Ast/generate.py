@@ -80,7 +80,6 @@ def define_file_header(f: TextIOWrapper):
 // This file should not be edited manually. 
 #pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
 
-using System;
 using System.Text;
 namespace cslox.Ast.Generated;\n\n
 """
@@ -95,6 +94,36 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
     #     f.writeln(f"    T Visit({type_name} _{type_name.lower()});")
     f.writeln(f"{TAB}TResult Visit<TExpression>(TExpression expression) where TExpression : {base_class};")
     f.writeln("}\n")
+
+
+def implement_visitor(f: TextIOWrapper, ast: Ast, visitor_name: str):
+    f.writeln = lambda x: f.write(x + "\n")
+    if ast.is_abstract and ast.ancestor is None:  # TODO: ast.ancestor is None is a hack
+        f.writeln(f"{TAB}public abstract TResult Accept<TResult>({visitor_name}<TResult> visitor);")
+    else:
+        f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor_name}<TResult> visitor) =>")
+        # f.writeln(f"{TAB * 2}visitor.Visit<{ast.name}>(this);\n")
+        f.writeln(f"{TAB * 2}visitor.Visit(this);\n")
+
+
+def define_fields(f: TextIOWrapper, ast: Ast):
+    f.writeln = lambda x: f.write(x + "\n")
+    for field_type, field_name in ast.fields:
+        f.writeln(f"{TAB}public {field_type} {field_name} {{ get; set; }} = {type_to_csharp_name(field_name)};")
+
+
+def define_deconstructor(f: TextIOWrapper, total_fields: list[tuple[str, str]]):
+    f.writeln = lambda x: f.write(x + "\n")
+    if len(total_fields) > 0:
+        deconstruct_parameters = fields_as_parameters(total_fields, type_mangle=lambda x: 'out ' + x,
+                                                      name_mangle=type_to_csharp_name)
+        left_side = fields_as_parameters(total_fields, type_to_csharp_name, discard)
+        right_side = fields_as_parameters(total_fields, type_mangle=discard)
+
+        # Todo: putting new for every Deconstruct method is a hack, 
+        #  since not all classes actually shadow it. 
+        f.writeln(f"{TAB}public new void Deconstruct{deconstruct_parameters} =>")
+        f.writeln(f"{TAB * 2}{left_side} = {right_side};")
 
 
 def define_ast(f: TextIOWrapper, base_ast: Ast):
@@ -114,31 +143,17 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
 
         # Fields 
         if ast.fields is not None:
-            for field_type, field_name in ast.fields:
-                f.writeln(f"{TAB}public {field_type} {field_name} {{ get; set; }} = {type_to_csharp_name(field_name)};")
+            define_fields(f, ast)
 
         # Deconstructor 
-        if len(total_fields) > 0:
-            deconstruct_parameters = fields_as_parameters(total_fields, type_mangle=lambda x: 'out ' + x,
-                                                          name_mangle=type_to_csharp_name)
-            left_side = fields_as_parameters(total_fields, type_to_csharp_name, discard)
-            right_side = fields_as_parameters(total_fields, type_mangle=discard)
-
-            # Todo: putting new for every Deconstruct method is a hack, 
-            #  since not all classes actually shadow it. 
-            f.writeln(f"{TAB}public new void Deconstruct{deconstruct_parameters} =>")
-            f.writeln(f"{TAB * 2}{left_side} = {right_side};")
+        define_deconstructor(f, total_fields)
 
         # Visitor 
         visitor = ast.get_visitor_name()
         if visitor is not None:
-            if ast.is_abstract and ast.ancestor is None:  # TODO: ast.ancestor is None is a hack
-                f.writeln(f"{TAB}public abstract TResult Accept<TResult>({visitor}<TResult> visitor);")
-            else:
-                f.writeln(f"{TAB}public override TResult Accept<TResult>({visitor}<TResult> visitor) =>")
-                # f.writeln(f"{TAB * 2}visitor.Visit<{ast.name}>(this);\n")
-                f.writeln(f"{TAB * 2}visitor.Visit(this);\n")
+            implement_visitor(f, ast, visitor)
 
+            # Pretty printing 
         if ast.is_abstract and ast.ancestor is None:
             f.writeln(f"{TAB}public abstract string TreePrint(int indent);")
             pass
@@ -150,9 +165,9 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             non_expressions = [t for t in total_fields or [] if t[0] != "Expression"]
             if len(non_expressions) > 0:
                 non_expressions_as_str = fields_as_parameters(non_expressions,
-                                                              name_mangle=lambda x: f"{{{x}}}", 
+                                                              name_mangle=lambda x: f"{{{x}}}",
                                                               type_mangle=discard)
-                f.writeln(f"{TAB*2}sb.Append($\" {non_expressions_as_str}\");")
+                f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
             f.writeln(f"{TAB * 2}sb.Append(\"\\n\");")
 
             other = [t for t in total_fields if t[0] == "Expression"]
@@ -160,7 +175,9 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                 f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
+
         f.writeln("}\n")
+
         for inheritor in ast.inheritors or []:
             define_ast_impl(inheritor)
 
