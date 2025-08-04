@@ -153,7 +153,7 @@ public class Parser
         if (Match(TokenType.Nil)) return new Literal(null);
 
         if (Match(TokenType.Number, TokenType.String))
-            return new Literal(PeekToken().Literal);
+            return new Literal(PeekPrevious().Literal);
 
         if (!Match(TokenType.LeftParen))
         {
