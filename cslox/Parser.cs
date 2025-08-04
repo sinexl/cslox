@@ -194,6 +194,40 @@ public class Parser
     public State SaveState() => _state;
     private void RestoreState(State state) => _state = state;
 
+    private bool ExpectAndConsume(TokenType expected)
+    {
+        if (IsEof()) return false;
+        if (PeekToken().Type == expected)
+        {
+            SkipToken();
+            return true;
+        }
+
+        Error(expected, PeekToken());
+
+        return false;
+    }
+
+    private void Error(Span<TokenType> expected, Token got)
+    {
+        var sb = new StringBuilder();
+        for (int i = 0; i < expected.Length; i++)
+        {
+            if (i > 0)
+            {
+                if (i + 1 >= expected.Length) sb.Append(", or ");
+                else sb.Append(", ");
+            }
+
+            sb.Append(expected[i].Humanize());
+        }
+
+        string str = sb.ToString();
+        Util.Report(got.Location, $"Parse Error: expected {str}, but got {got.Type.Humanize()}");
+    }
+
+    private void Error(TokenType expected, Token got) => Error([expected], got);
+
     public static void Test()
     {
         var printer = new PrefixPrinter();
