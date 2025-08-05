@@ -205,7 +205,6 @@ public class Parser
     [Pure]
     private bool ExpectAndConsume(TokenType expected)
     {
-        if (IsEof()) return false;
         if (PeekToken().Type == expected)
         {
             SkipToken();
@@ -213,7 +212,6 @@ public class Parser
         }
 
         Error(expected, PeekToken());
-
         return false;
     }
 
