@@ -360,22 +360,3 @@ public class Lexer
         return false;
     }
 }
-
-public static class Extensions
-{
-    public static bool HasLexeme(this TokenType type) => type switch
-    {
-        TokenType.Number or TokenType.String => true,
-        _ => false
-    };
-
-    public static IEnumerable<T> ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
-    {
-        foreach (var x in enumerable)
-            action(x);
-        return enumerable;
-    }
-
-    public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
-    public static bool IsId(this char c) => char.IsLetter(c) || char.IsDigit(c) || c == '_';
-}

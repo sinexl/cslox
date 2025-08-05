@@ -1,36 +1,48 @@
 ﻿using System.Diagnostics.Contracts;
 using cslox;
+using cslox.Ast;
 
-if (args.Length > 1)
+int Main(string[] args)
 {
-    Console.WriteLine("Usage: cslox <file>. Currently only single file is supported");
-    return -1;
+    if (args.Length > 1)
+    {
+        Console.WriteLine("Usage: cslox <file>. Currently only single file is supported");
+        return -1;
+    }
+
+    if (args.Length == 1)
+    {
+        RunFile(args[0]);
+    }
+    else
+    {
+        Prompt();
+    }
+
+    return 0;
 }
 
-if (args.Length == 1)
-{
-    RunFile(args[0]);
-}
-else
-{
-    Prompt();
-}
-
-return 0;
+return Main(args);
 
 [Pure]
 Error[] RunCode(string src, string? filePath = null)
 {
     Console.WriteLine($"src: {src}");
     var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
-    var tokens = lexer.Accumulate(); 
+    var printer = new PrefixPrinter(); 
+    var tokens = lexer.Accumulate();
+    var parser = new Parser(tokens); 
     if (lexer.Errors.Count > 0) return lexer.Errors.ToArray();
-
-
-    foreach (Token token in tokens)
+    var expression = parser.ParseExpression();
+    // TODO: Proper error handling
+    if (expression is null)
     {
-    }
+        Console.WriteLine("Parse error occured");
+        Environment.Exit(65);
+    } 
 
+
+    Console.WriteLine(printer.Print(expression));
     return [];
 }
 
@@ -64,25 +76,4 @@ void Prompt()
 bool ReportAllErrorsIfSome(Error[] errors1)
 {
     throw new NotImplementedException();
-}
-
-public record struct SourceLocation()
-{
-    public string File { get; set; } 
-    public int Line { get; set; }
-    public int Offset   { get; set; }
-
-    public SourceLocation(string file, int line, int offset) : this()
-    {
-        File = file;
-        Line = line;
-        Offset = offset;
-    }
-
-    public override string ToString() => $"{File}:{Line}:{Offset}";
-}
-
-public record class Error(SourceLocation Location, string Message)
-{
-    public override string ToString() => $"{Location}: {Message}";
 }

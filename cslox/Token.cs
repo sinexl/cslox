@@ -87,6 +87,14 @@ public enum TokenType
 
 public static class TokenTypeExtensions
 {
+    public static bool IsStatementBeginning(this TokenType type) =>
+        type switch
+        {
+            TokenType.Class or TokenType.Fun or TokenType.Var or TokenType.For or TokenType.If or TokenType.While
+                or TokenType.Print or TokenType.Return => true,
+            _ => false
+        };
+
     public static string? Terminal(this TokenType type) =>
         type switch
         {
