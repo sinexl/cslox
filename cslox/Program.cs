@@ -23,7 +23,7 @@ Error[] RunCode(string src, string? filePath = null)
 {
     Console.WriteLine($"src: {src}");
     var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
-    var tokens = lexer.Accumulate();
+    var tokens = lexer.Accumulate(); 
     if (lexer.Errors.Count > 0) return lexer.Errors.ToArray();
 
 

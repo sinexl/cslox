@@ -50,7 +50,7 @@ public class Lexer
     public SourceLocation SourceLoc => new(FilePath, _state.LineNumber, _state.Current - _state.LineStart);
     private LexerState _tokenStart;
 
-    public IEnumerable<Token> Accumulate()
+    public Token[] Accumulate()
     {
         var tokens = new List<Token>();
         while (!IsEof())
