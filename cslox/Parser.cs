@@ -166,12 +166,15 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal);
 
-        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
-
-        Expression? expr = ParseExpression();
-        if (expr is null) return null;
-        if (!ExpectAndConsume(TokenType.RightParen)) return null;
-        return new Grouping(expr);
+        if (ExpectAndConsume(TokenType.LeftParen))
+        {
+            Expression? expr = ParseExpression();
+            if (expr is null) return null;
+            if (!ExpectAndConsume(TokenType.RightParen)) return null;
+            return new Grouping(expr);
+        }
+        Error(PeekToken().Location, "Expected expression");
+        return null;
     }
 
     private bool Match(params Span<TokenType> types)
@@ -215,7 +218,7 @@ public class Parser
         return false;
     }
 
-    private void Error(Span<TokenType> expected, Token got)
+    private void Error(Span<TokenType> expected, Token got, string? message = null)
     {
         var sb = new StringBuilder();
         for (int i = 0; i < expected.Length; i++)
@@ -230,10 +233,27 @@ public class Parser
         }
 
         string str = sb.ToString();
-        Util.Report(got.Location, $"Parse Error: expected {str}, but got {got.Type.Humanize()}");
+        Util.Report(got.Location,
+            message is not null
+                ? $"error: {message}. Expected {str}, but got {got.Type.Humanize()}"
+                : $"error: expected {str}, but got {got.Type.Humanize()}");
     }
 
-    private void Error(TokenType expected, Token got) => Error([expected], got);
+    private void Error(TokenType expected, Token got, string? message = null) => Error([expected], got, message);
+    private void Error(SourceLocation location, string message) => Util.Report(location, $"error: {message}");
+
+    // As suggested in the book, we use statements as synchronization point. 
+    // When an error occurs, we treat the current statement as malformed and skip all tokens until the next statement 
+    private void SynchronizeToStatement()
+    {
+        SkipToken();
+        while (!IsEof())
+        {
+            if (PeekPrevious().Type == TokenType.Semicolon) return;
+            if (PeekToken().Type.IsStatementBeginning()) return;
+            SkipToken();
+        }
+    }
 
     public static void Test()
     {
