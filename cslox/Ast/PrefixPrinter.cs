@@ -44,7 +44,12 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Sequence(var expressions): return Sequence("sequence", expressions);
         }
 
-        throw new UnreachableException("Not all cases are handled");
+        // This is how you do static assertions in this language. 
+        // Welcome to C# 
+        byte staticAssert = Expression.InheritorsAmount == 16 ? 0 : -1;
+        _ = staticAssert; 
+        
+        throw new UnreachableException("Not all cases are handled"); 
     }
 
     private string Sequence(string name, Expression[] expressions)
