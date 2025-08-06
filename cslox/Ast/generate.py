@@ -21,9 +21,10 @@ class Ast:
     inheritors: list[Ast] | None
     is_abstract: bool
     visitor_name: str | Inherited | None
+    custom_code = list[Callable[["Ast"], None]]
 
     def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, visitor_name: str = Inherited,
-                 abstract: bool = False,
+                 abstract: bool = False, custom_code: None | list[Callable[["Ast"], None]] = None,
                  inheritors: list["Ast"] | None = None):
         if type(fields) is str:
             self.fields = []
@@ -40,6 +41,7 @@ class Ast:
             i.ancestor = self
         self.is_abstract = abstract
         self.visitor_name = visitor_name
+        self.custom_code = custom_code or []
 
     def __str__(self):
         return self.to_str(indent=0)
@@ -177,6 +179,8 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
 
+        for i in ast.custom_code:
+            i(ast)
         f.writeln("}\n")
 
         for inheritor in ast.inheritors or []:
@@ -223,12 +227,11 @@ def main():
     output_folder = "Generated"
     base_name = "Expression"
     visitor_name = "IExpressionVisitor"
-
     ast = Ast(base_name, None, abstract=True, visitor_name=visitor_name, inheritors=[
         Ast("Grouping", f"{base_name} Expression"),
         Ast("Literal", f"object? Value"),
         Ast("Unary", f"{base_name} Expression, Token Operator"),
-        Ast("Sequence", f"{base_name}[] Expressions"), 
+        Ast("Sequence", f"{base_name}[] Expressions"),
         Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
             # Arithmetics  
             Ast("Addition", None),
