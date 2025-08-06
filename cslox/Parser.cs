@@ -6,6 +6,7 @@ using cslox.Ast.Generated;
 
 namespace cslox;
 
+// TODO: Ternary operator.
 /*
 Syntax:
         expression     → sequence ;

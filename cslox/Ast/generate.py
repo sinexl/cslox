@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from ctypes import ArgumentError
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from io import TextIOWrapper
@@ -69,6 +70,23 @@ class Ast:
         if self.visitor_name is Inherited: return self.ancestor.get_visitor_name()
         return self.visitor_name
 
+    def get_inheritors_amount(self, count=0) -> int:
+        count += 1
+        for i in self.inheritors or []:
+            count = i.get_inheritors_amount(count)
+        return count
+
+    def get_inheritors(self) -> set["Ast"]:
+        inheritors = set()
+
+        def impl(ast: Ast):
+            inheritors.add(ast)
+            for i in ast.inheritors or []:
+                impl(i)
+
+        impl(self)
+        return inheritors
+
 
 def get_ast_fields_or(ast: Ast | None, or_) -> list[tuple[str, str]] | None:
     if ast is None or ast.fields is None: return or_
@@ -126,6 +144,16 @@ def define_deconstructor(f: TextIOWrapper, total_fields: list[tuple[str, str]]):
         #  since not all classes actually shadow it. 
         f.writeln(f"{TAB}public new void Deconstruct{deconstruct_parameters} =>")
         f.writeln(f"{TAB * 2}{left_side} = {right_side};")
+
+
+def define_inheritors_amount(f: TextIOWrapper | None, ast: Ast, indent: int):
+    if f is None:
+        raise ArgumentError("f cannot be None")
+    count = ast.get_inheritors_amount()
+    f.write(
+        f"{TAB * indent}// Needed so implementers of Visitor can statically assert whether they handle all possible inheritors.\n"
+        f"{TAB * indent}// For static assert in C#, see https://www.lunesu.com/archives/62-Static-assert-in-C!.html\n")
+    f.write(f"{TAB * indent}public const int InheritorsAmount = {count};\n")
 
 
 def define_ast(f: TextIOWrapper, base_ast: Ast):
@@ -248,6 +276,8 @@ def main():
     os.makedirs(output_folder, exist_ok=True)
     print(f"{ast:f}")
     with open(f"{output_folder}/{base_name}.cs", "w") as file:
+        wrapper = lambda _ast: define_inheritors_amount(file, _ast, 1)
+        ast.custom_code.append(wrapper)
         define_file_header(file)
         define_visitor(file, base_name, visitor_name)
         define_ast(file, ast)
