@@ -19,15 +19,15 @@ Syntax:
         primary        → NUMBER | STRING | "true" | "false" | "nil"
                        | "(" expression ")" ;
 
-Precedence & Associativity  (from the lowest precedence to highest)
+Precedence & Associativity  (from the highest precedence to lowest)
         Name          Operators      Associates
         ------------------------------------
-        Sequence       ,             |  Left
-        Equality       == !=         |  Left
-        Comparison     > >= < <=     |  Left
-        Term           - +           |  Left
-        Factor         / *           |  Left
         Unary          ! -           |  Right
+        Factor         / *           |  Left
+        Term           - +           |  Left
+        Comparison     > >= < <=     |  Left
+        Equality       == !=         |  Left
+        Sequence       ,             |  Left
 */
 
 public class Parser
