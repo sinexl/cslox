@@ -23,6 +23,12 @@ public class PrefixPrinter : IExpressionVisitor<string>
                     Multiplication => Parenthesise("*", left, right),
                     Subtraction => Parenthesise("-", left, right),
                     Division => Parenthesise("/", left, right),
+                    Equality => Parenthesise("==", left, right),
+                    Inequality => Parenthesise("!=", left, right),
+                    Greater => Parenthesise(">", left, right),
+                    GreaterEqual => Parenthesise(">=", left, right),
+                    Less => Parenthesise("<", left, right),
+                    LessEqual => Parenthesise("<=", left, right),
                     _ => throw new UnreachableException("Not all cases are handled")
                 };
             }
@@ -35,11 +41,14 @@ public class PrefixPrinter : IExpressionVisitor<string>
                 return Parenthesise("group", inner);
             case Unary(var inner, var op):
                 return Parenthesise(op.Lexeme, inner);
-            case Sequence(var expressions): return Parenthesise("sequence", expressions); 
+            case Sequence(var expressions): return Sequence("sequence", expressions);
         }
 
         throw new UnreachableException("Not all cases are handled");
     }
+
+    private string Sequence(string name, Expression[] expressions)
+        => $"({Parenthesise(name, expressions)})";
 
     private string Parenthesise(string name, params IEnumerable<Expression> expressions)
     {
