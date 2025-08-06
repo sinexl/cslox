@@ -152,7 +152,7 @@ def define_inheritors_amount(f: TextIOWrapper | None, ast: Ast, indent: int):
     count = ast.get_inheritors_amount()
     f.write(
         f"{TAB * indent}// Needed so implementers of Visitor can statically assert whether they handle all possible inheritors.\n"
-        f"{TAB * indent}// For static assert in C#, see https://www.lunesu.com/archives/62-Static-assert-in-C!.html\n")
+        f"{TAB * indent}// For static_assert in C#, see https://www.lunesu.com/archives/62-Static-assert-in-C!.html\n")
     f.write(f"{TAB * indent}public const int InheritorsAmount = {count};\n")
 
 
