@@ -8,7 +8,8 @@ namespace cslox;
 
 /*
 Syntax:
-        expression     → equality ;
+        expression     → sequence ;
+        sequence       → equality ( (  "," ) equality )* ;
         equality       → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term           → factor ( ( "-" | "+" ) factor )* ;
@@ -21,6 +22,7 @@ Syntax:
 Precedence & Associativity  (from the lowest precedence to highest)
         Name          Operators      Associates
         ------------------------------------
+        Sequence       ,             |  Left
         Equality       == !=         |  Left
         Comparison     > >= < <=     |  Left
         Term           - +           |  Left
@@ -47,7 +49,24 @@ public class Parser
 
     public Expression? ParseExpression()
     {
-        return ParseEquality();
+        return ParseSequence();
+    }
+
+    public Expression? ParseSequence()
+    {
+        List<Expression> expressions = new();
+        var item = ParseEquality();
+        if (item is null) return null;
+        expressions.Add(item);
+        while (Match(TokenType.Comma))
+        {
+            item = ParseEquality();
+            if (item is null) return null;
+            expressions.Add(item);
+        }
+
+        if (expressions.Count == 1) return expressions[0];
+        return new Sequence(expressions.ToArray());
     }
 
     // Todo: Factor out all similar functions into ParseBinop
@@ -173,6 +192,7 @@ public class Parser
             if (!ExpectAndConsume(TokenType.RightParen)) return null;
             return new Grouping(expr);
         }
+
         Error(PeekToken().Location, "Expected expression");
         return null;
     }
