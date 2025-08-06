@@ -35,6 +35,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
                 return Parenthesise("group", inner);
             case Unary(var inner, var op):
                 return Parenthesise(op.Lexeme, inner);
+            case Sequence(var expressions): return Parenthesise("sequence", expressions); 
         }
 
         throw new UnreachableException("Not all cases are handled");

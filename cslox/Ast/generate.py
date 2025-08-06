@@ -153,7 +153,7 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
         if visitor is not None:
             implement_visitor(f, ast, visitor)
 
-            # Pretty printing 
+        # Pretty printing 
         if ast.is_abstract and ast.ancestor is None:
             f.writeln(f"{TAB}public abstract string TreePrint(int indent);")
             pass
@@ -170,6 +170,7 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
             f.writeln(f"{TAB * 2}sb.Append(\"\\n\");")
 
+            # TODO: Handle arrays
             other = [t for t in total_fields if t[0] == "Expression"]
             for field_type, field_name in other:
                 f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
@@ -227,6 +228,7 @@ def main():
         Ast("Grouping", f"{base_name} Expression"),
         Ast("Literal", f"object? Value"),
         Ast("Unary", f"{base_name} Expression, Token Operator"),
+        Ast("Sequence", f"{base_name}[] Expressions"), 
         Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
             # Arithmetics  
             Ast("Addition", None),
