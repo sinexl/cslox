@@ -64,7 +64,8 @@ public class Interpreter : IExpressionVisitor<object?>
             }
         }
 
-
+        byte staticAssert = Expression.InheritorsAmount == 16 ? 0 : -1;
+        _ = staticAssert;
         throw new UnreachableException("Not all cases are handled for some reason");
     }
 }
