@@ -12,6 +12,7 @@ public class Util
         Console.Error.WriteLine($"{loc}: ({where}) {message}");
     }
 }
+
 public static class Extensions
 {
     public static bool HasLexeme(this TokenType type) => type switch
@@ -29,6 +30,7 @@ public static class Extensions
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
     public static bool IsId(this char c) => char.IsLetter(c) || char.IsDigit(c) || c == '_';
 }
+
 public record struct SourceLocation()
 {
     public string File { get; set; }
