@@ -203,9 +203,7 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                                                               name_mangle=lambda x: f"{{{x}}}",
                                                               type_mangle=discard)
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
-            f.writeln(f"{TAB * 2}sb.Append(\" \");")
-            f.writeln(f"{TAB * 2}sb.Append($\"<at {{Location}}>\\n\");")
-            # TODO: Handle arrays
+            f.writeln(f"{TAB*2}sb.Append(\'\\n\');")
             other = [t for t in total_fields if t[0].startswith("Expression")]
             for field_type, field_name in other:
                 if not field_type.endswith("[]"): 
