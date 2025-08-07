@@ -22,10 +22,11 @@ class Ast:
     inheritors: list[Ast] | None
     is_abstract: bool
     visitor_name: str | Inherited | None
-    custom_code = list[Callable[["Ast"], None]]
+    #                            File           Ast    Indent
+    custom_code = list[Callable[[TextIOWrapper, "Ast", int], None]]
 
     def __init__(self, name: str, fields: list[tuple[str, str]] | str | None, visitor_name: str = Inherited,
-                 abstract: bool = False, custom_code: None | list[Callable[["Ast"], None]] = None,
+                 abstract: bool = False, custom_code: None | list[Callable[[TextIOWrapper, "Ast", int], None]] = None,
                  inheritors: list["Ast"] | None = None):
         if type(fields) is str:
             self.fields = []
@@ -146,6 +147,10 @@ def define_deconstructor(f: TextIOWrapper, total_fields: list[tuple[str, str]]):
         f.writeln(f"{TAB * 2}{left_side} = {right_side};")
 
 
+def define_source_loc(f: TextIOWrapper, _: Ast, indent: int):
+    f.write(f"{TAB * indent}public SourceLocation Location {{ get; set; }} = new();\n")
+
+
 def define_inheritors_amount(f: TextIOWrapper | None, ast: Ast, indent: int):
     if f is None:
         raise ArgumentError("f cannot be None")
@@ -192,23 +197,26 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             f.writeln(f"{TAB}public override string TreePrint(int indent)\n{TAB}{{")
             f.writeln(f"{TAB * 2}var sb = new StringBuilder();")
             f.writeln(f"{TAB * 2}sb.Append(new string(' ', indent * 2)).Append(\"{ast.name}\");")
-            non_expressions = [t for t in total_fields or [] if t[0] != "Expression"]
+            non_expressions = [t for t in total_fields or [] if not t[0].startswith("Expression")]
             if len(non_expressions) > 0:
                 non_expressions_as_str = fields_as_parameters(non_expressions,
                                                               name_mangle=lambda x: f"{{{x}}}",
                                                               type_mangle=discard)
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
-            f.writeln(f"{TAB * 2}sb.Append(\"\\n\");")
-
+            f.writeln(f"{TAB * 2}sb.Append(\" \");")
+            f.writeln(f"{TAB * 2}sb.Append($\"<at {{Location}}>\\n\");")
             # TODO: Handle arrays
-            other = [t for t in total_fields if t[0] == "Expression"]
+            other = [t for t in total_fields if t[0].startswith("Expression")]
             for field_type, field_name in other:
-                f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
+                if not field_type.endswith("[]"): 
+                    f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
+                else: 
+                    f.writeln(f"{TAB * 2}sb.Append({field_name}.ArrayTreePrint(indent + 1));")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
 
         for i in ast.custom_code:
-            i(ast)
+            i(f, ast, 1)
         f.writeln("}\n")
 
         for inheritor in ast.inheritors or []:
@@ -255,29 +263,28 @@ def main():
     output_folder = "Generated"
     base_name = "Expression"
     visitor_name = "IExpressionVisitor"
-    ast = Ast(base_name, None, abstract=True, visitor_name=visitor_name, inheritors=[
-        Ast("Grouping", f"{base_name} Expression"),
-        Ast("Literal", f"object? Value"),
-        Ast("Unary", f"{base_name} Expression, Token Operator"),
-        Ast("Sequence", f"{base_name}[] Expressions"),
-        Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
-            # Arithmetics  
-            Ast("Addition", None),
-            Ast("Subtraction", None),
-            Ast("Multiplication", None),
-            Ast("Division", None),
-            # Comparison 
-            Ast("Equality", None), Ast("Inequality", None),
-            Ast("Greater", None), Ast("GreaterEqual", None),
-            Ast("Less", None), Ast("LessEqual", None),
-
-        ])
-    ])
+    ast = Ast(base_name, None, abstract=True, custom_code=[define_inheritors_amount, define_source_loc],
+              visitor_name=visitor_name,
+              inheritors=[
+                  Ast("Grouping", f"{base_name} Expression"),
+                  Ast("Literal", f"object? Value"),
+                  Ast("Unary", f"{base_name} Expression, Token Operator"),
+                  Ast("Sequence", f"{base_name}[] Expressions"),
+                  Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
+                      # Arithmetics  
+                      Ast("Addition", None),
+                      Ast("Subtraction", None),
+                      Ast("Multiplication", None),
+                      Ast("Division", None),
+                      # Comparison 
+                      Ast("Equality", None), Ast("Inequality", None),
+                      Ast("Greater", None), Ast("GreaterEqual", None),
+                      Ast("Less", None), Ast("LessEqual", None),
+                  ])
+              ])
     os.makedirs(output_folder, exist_ok=True)
     print(f"{ast:f}")
     with open(f"{output_folder}/{base_name}.cs", "w") as file:
-        wrapper = lambda _ast: define_inheritors_amount(file, _ast, 1)
-        ast.custom_code.append(wrapper)
         define_file_header(file)
         define_visitor(file, base_name, visitor_name)
         define_ast(file, ast)

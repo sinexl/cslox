@@ -1,6 +1,9 @@
+using System.Text;
+using Expression = cslox.Ast.Generated.Expression;
+
 namespace cslox;
 
-public class Util
+public static class Util
 {
     public static void Report(SourceLocation loc, string message)
     {
@@ -25,6 +28,19 @@ public static class Extensions
     {
         foreach (var x in enumerable)
             action(x);
+    }
+
+    public static string ArrayTreePrint(this IEnumerable<Expression> array, int indent = 0)
+    {
+        var sb = new StringBuilder(); 
+        var tab = new string(' ', indent * 2);  
+        foreach (var e in array)
+        {
+            var asStr = e.TreePrint(indent + 2);
+            sb.Append($"{tab}{e.TreePrint(indent + 1)}"); 
+        }
+
+        return sb.ToString(); 
     }
 
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
