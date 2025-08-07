@@ -18,7 +18,7 @@ public class LocationPrinter : IExpressionVisitor<string>
         void Impl(Expression expr, int indent)
         {
             string tabulation = new(' ', indent * spacesPerTab);
-            sb.Append($"{tabulation}{expr.Location}: {expr.GetType().Name}\n");
+            sb.Append($"{expr.Location}:{tabulation} {expr.GetType().Name}\n");
             previousIndex = sb.Length; 
             switch (expr)
             {
