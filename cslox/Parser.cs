@@ -279,9 +279,9 @@ public class Parser
     public static void Test()
     {
         var prefixPrinter = new PrefixPrinter();
-        var tokens = Lexer.FromFile("./Tests/parser.cslox").Accumulate().ToList();
+        var tokens = Lexer.FromFile("./QuickTests/parser.cslox").Accumulate().ToList();
         var self = new Parser(tokens);
-        tokens.ForEach(Console.WriteLine);
+        // tokens.ForEach(Console.WriteLine);
         var expression = self.ParseExpression();
 
         if (expression is null)

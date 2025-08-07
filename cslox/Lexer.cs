@@ -321,7 +321,7 @@ public class Lexer
 
     public static void Test()
     {
-        string path = "./test.cslox";
+        string path = "./QuickTests/lexer.cslox";
         string src = File.ReadAllText(path);
 
         var self = new Lexer(src, path);

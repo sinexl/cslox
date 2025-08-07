@@ -8,10 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="test.cslox">
+      <None Update="QuickTests\parser.cslox">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Tests\parser.cslox">
+      <None Update="QuickTests\lexer.cslox">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
