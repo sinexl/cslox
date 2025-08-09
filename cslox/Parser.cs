@@ -55,6 +55,7 @@ public class Parser
 
     public Expression? ParseSequence()
     {
+        SourceLocation loc = PeekToken().Location;
         List<Expression> expressions = new();
         var item = ParseEquality();
         if (item is null) return null;
@@ -67,7 +68,7 @@ public class Parser
         }
 
         if (expressions.Count == 1) return expressions[0];
-        return new Sequence(expressions.ToArray());
+        return new Sequence(expressions.ToArray()) { Location = loc };
     }
 
     // Todo: Factor out all similar functions into ParseBinop
@@ -85,8 +86,8 @@ public class Parser
             if (right is null) return null;
             left = op.Type switch
             {
-                TokenType.EqualEqual => new Equality(left, right),
-                TokenType.BangEqual => new Inequality(left, right),
+                TokenType.EqualEqual => new Equality(left, right) { Location = op.Location },
+                TokenType.BangEqual => new Inequality(left, right) { Location = op.Location },
                 _ => throw new UnreachableException("Unreachable")
             };
         }
@@ -107,10 +108,10 @@ public class Parser
             if (right is null) return null;
             left = op.Type switch
             {
-                TokenType.Greater => new Greater(left, right),
-                TokenType.GreaterEqual => new GreaterEqual(left, right),
-                TokenType.Less => new Less(left, right),
-                TokenType.LessEqual => new LessEqual(left, right),
+                TokenType.Greater => new Greater(left, right) { Location = op.Location },
+                TokenType.GreaterEqual => new GreaterEqual(left, right) { Location = op.Location },
+                TokenType.Less => new Less(left, right) { Location = op.Location },
+                TokenType.LessEqual => new LessEqual(left, right) { Location = op.Location },
                 _ => throw new UnreachableException("Unreachable")
             };
         }
@@ -131,8 +132,8 @@ public class Parser
             if (right is null) return null;
             left = op.Type switch
             {
-                TokenType.Plus => new Addition(left, right),
-                TokenType.Minus => new Subtraction(left, right),
+                TokenType.Plus => new Addition(left, right) { Location = op.Location },
+                TokenType.Minus => new Subtraction(left, right) { Location = op.Location },
                 _ => throw new UnreachableException("Unreachable")
             };
         }
@@ -152,8 +153,8 @@ public class Parser
             if (right is null) return null;
             left = op.Type switch
             {
-                TokenType.Star => new Multiplication(left, right),
-                TokenType.Slash => new Division(left, right),
+                TokenType.Star => new Multiplication(left, right) {Location = op.Location},
+                TokenType.Slash => new Division(left, right) {Location = op.Location},
                 _ => throw new UnreachableException("Unreachable")
             };
         }
@@ -170,7 +171,7 @@ public class Parser
             Expression? inner = ParseUnary();
             if (inner is null) return null;
 
-            return new Unary(inner, op);
+            return new Unary(inner, op) {Location = op.Location}; 
         }
 
         return ParsePrimary();
@@ -179,19 +180,21 @@ public class Parser
     // number, string, nil, true, false
     private Expression? ParsePrimary()
     {
-        if (Match(TokenType.False)) return new Literal(false);
-        if (Match(TokenType.True)) return new Literal(true);
-        if (Match(TokenType.Nil)) return new Literal(null);
+        SourceLocation loc = PeekToken().Location;
+        if (Match(TokenType.False)) return CreateLiteral(false);
+        if (Match(TokenType.True)) return CreateLiteral(true);
+        if (Match(TokenType.Nil)) return CreateLiteral(null);
 
         if (Match(TokenType.Number, TokenType.String))
-            return new Literal(PeekPrevious().Literal);
-
+            return new Literal(PeekPrevious().Literal) { Location = loc };
+        
         if (ExpectAndConsume(TokenType.LeftParen))
         {
+            SourceLocation parenthesisLoc = PeekPrevious().Location; 
             Expression? expr = ParseExpression();
             if (expr is null) return null;
             if (!ExpectAndConsume(TokenType.RightParen)) return null;
-            return new Grouping(expr);
+            return new Grouping(expr) {Location = parenthesisLoc};
         }
 
         Error(PeekToken().Location, "Expected expression");
@@ -276,12 +279,16 @@ public class Parser
         }
     }
 
+    private Literal CreateLiteral(object? value) => new(value) { Location = PeekToken().Location };
+
     public static void Test()
     {
         var prefixPrinter = new PrefixPrinter();
+        var locPrinter = new LocationPrinter();
         var tokens = Lexer.FromFile("./QuickTests/parser.cslox").Accumulate().ToList();
         var self = new Parser(tokens);
-        // tokens.ForEach(Console.WriteLine);
+        tokens.ForEach(t => Console.WriteLine($"{t.Location}: {t.Type}"));
+        Console.WriteLine("\n");
         var expression = self.ParseExpression();
 
         if (expression is null)
@@ -290,7 +297,17 @@ public class Parser
             Environment.Exit(1);
         }
 
-        Console.WriteLine(expression);
+        // Console.WriteLine(expression);
+        Console.WriteLine(locPrinter.Print(expression));
         Console.WriteLine(prefixPrinter.Print(expression));
+    }
+}
+
+public static class ParserExtensions
+{
+    public static Expression WithLoc(this Expression expr, SourceLocation loc)
+    {
+        expr.Location = loc;
+        return expr;
     }
 }
