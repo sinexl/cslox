@@ -15,7 +15,12 @@ public record struct LexerState
 
     public SourceLocation ToSourceLocation(string file)
     {
-        return new SourceLocation(file: file, line: LineNumber, offset: Current - LineStart);
+        int offset = Current - LineStart;
+        if (LineNumber > 1)
+        {
+            offset -= 1;
+        }
+        return new SourceLocation(file: file, line: LineNumber, offset);
     }
 
     public int Current { get; set; }
@@ -75,8 +80,8 @@ public class Lexer
         SkipWhitespacesAndComments();
         if (IsEof()) return null;
         var saved = SaveState();
-        _tokenStart = _state;
         char c = NextChar();
+        _tokenStart = _state;
         switch (c)
         {
             case '(': return CreateToken(TokenType.LeftParen);
