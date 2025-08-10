@@ -1,4 +1,4 @@
-using cslox;
+using System;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -17,15 +17,15 @@ public class InterpreterTest
     [Fact]
     public void Equality()
     {
-        Assert.Equal(Interpret("4 + 4"), 8.0);
-        Assert.Equal(Interpret("4 - 4"), 0.0);
+        Assert.Equal(8.0, Interpret("4 + 4"));
+        Assert.Equal(0.0, Interpret("4 - 4"));
     }
 
     [Fact]
     public void NilComparison()
     {
-        Assert.Equal(Interpret("nil == nil"), true);
-        Assert.Equal(Interpret("nil != nil"), false); 
+        Assert.Equal(true, Interpret("nil == nil"));
+        Assert.Equal(false, Interpret("nil != nil"));
     }
 
     [Fact]
