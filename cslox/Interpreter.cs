@@ -51,7 +51,7 @@ public class Interpreter : IExpressionVisitor<object?>
                 {
                     Subtraction => leftNumber - rightNumber,
                     Multiplication => leftNumber * rightNumber,
-                    Division => leftNumber / rightNumber,
+                    Division => leftNumber.LoxDivide(rightNumber, e.Location), 
                     Greater => leftNumber > rightNumber,
                     GreaterEqual => leftNumber >= rightNumber,
                     Less => leftNumber < rightNumber,
@@ -106,6 +106,13 @@ public static class InterpreterExtensions
             _ => obj.ToString() ?? throw new UnreachableException("This should be unreachable")
         };
     }
+
+    public static double LoxDivide(this double left, double right, SourceLocation loc)
+    {
+        if (right == 0.0)
+            throw new LoxZeroDivideException("Zero division is not allowed.", loc);
+        return left / right; 
+    }
 }
 
 public class LoxRuntimeException : Exception
@@ -131,6 +138,18 @@ public class LoxRuntimeException : Exception
     }
 
     public override string ToString() => $"{Location}: {Message}";
+}
+
+public class LoxZeroDivideException : LoxRuntimeException
+{
+    public LoxZeroDivideException(string message, SourceLocation location) : base(message, location)
+    {
+    }
+
+    public LoxZeroDivideException(string message, SourceLocation location, Exception inner) : base(message, location,
+        inner)
+    {
+    }
 }
 
 public class LoxCastException : LoxRuntimeException
