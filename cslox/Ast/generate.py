@@ -203,12 +203,12 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                                                               name_mangle=lambda x: f"{{{x}}}",
                                                               type_mangle=discard)
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
-            f.writeln(f"{TAB*2}sb.Append(\'\\n\');")
+            f.writeln(f"{TAB * 2}sb.Append(\'\\n\');")
             other = [t for t in total_fields if t[0].startswith("Expression")]
             for field_type, field_name in other:
-                if not field_type.endswith("[]"): 
+                if not field_type.endswith("[]"):
                     f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
-                else: 
+                else:
                     f.writeln(f"{TAB * 2}sb.Append({field_name}.ArrayTreePrint(indent + 1));")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
@@ -259,33 +259,45 @@ def type_to_csharp_name(t: str) -> str:
 
 def main():
     output_folder = "Generated"
-    base_name = "Expression"
-    visitor_name = "IExpressionVisitor"
-    ast = Ast(base_name, None, abstract=True, custom_code=[define_inheritors_amount, define_source_loc],
-              visitor_name=visitor_name,
-              inheritors=[
-                  Ast("Grouping", f"{base_name} Expression"),
-                  Ast("Literal", f"object? Value"),
-                  Ast("Unary", f"{base_name} Expression, Token Operator"),
-                  Ast("Sequence", f"{base_name}[] Expressions"),
-                  Ast("Binary", f"{base_name} Left, {base_name} Right", abstract=True, inheritors=[
-                      # Arithmetics  
-                      Ast("Addition", None),
-                      Ast("Subtraction", None),
-                      Ast("Multiplication", None),
-                      Ast("Division", None),
-                      # Comparison 
-                      Ast("Equality", None), Ast("Inequality", None),
-                      Ast("Greater", None), Ast("GreaterEqual", None),
-                      Ast("Less", None), Ast("LessEqual", None),
-                  ])
-              ])
     os.makedirs(output_folder, exist_ok=True)
-    print(f"{ast:f}")
-    with open(f"{output_folder}/{base_name}.cs", "w") as file:
-        define_file_header(file)
-        define_visitor(file, base_name, visitor_name)
-        define_ast(file, ast)
+
+    expression_name = "Expression"
+    expression_visitor_name = "IExpressionVisitor"
+    expression_ast = \
+        Ast(expression_name, None, abstract=True, custom_code=[define_inheritors_amount, define_source_loc],
+            visitor_name=expression_visitor_name,
+            inheritors=[
+                Ast("Grouping", f"{expression_name} Expression"),
+                Ast("Literal", f"object? Value"),
+                Ast("Unary", f"{expression_name} Expression, Token Operator"),
+                Ast("Sequence", f"{expression_name}[] Expressions"),
+                Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
+                    # Arithmetics  
+                    Ast("Addition", None),
+                    Ast("Subtraction", None),
+                    Ast("Multiplication", None),
+                    Ast("Division", None),
+                    # Comparison 
+                    Ast("Equality", None), Ast("Inequality", None),
+                    Ast("Greater", None), Ast("GreaterEqual", None),
+                    Ast("Less", None), Ast("LessEqual", None),
+                ])
+            ])
+
+    statement_name = "Statement"
+    statement_visitor_name = "IStatementVisitor"
+    statement_ast = \
+        Ast(statement_name, None, abstract=True, custom_code=[define_inheritors_amount, define_source_loc],
+            visitor_name=statement_visitor_name, inheritors=[
+                Ast("ExpressionStatement", f"{statement_name} Expression"),
+                Ast("Print", f"{statement_name} Expression"),
+            ])
+    for i in [expression_ast, statement_ast]:
+        print(f"{i:f}")
+        with open(f"{output_folder}/{i.name}.cs", "w") as file:
+            define_file_header(file)
+            define_visitor(file, i.name, i.visitor_name)
+            define_ast(file, i)
 
 
 if __name__ == "__main__":
