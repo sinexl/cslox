@@ -41,8 +41,8 @@ public class Interpreter : IExpressionVisitor<object?>
                     };
                 }
 
-                var rightNumber = leftValue.ToLoxDouble(left);
-                var leftNumber = rightValue.ToLoxDouble(right);
+                var leftNumber = leftValue.ToLoxDouble(left);
+                var rightNumber = rightValue.ToLoxDouble(right);
                 return e switch
                 {
                     Addition => throw new UnreachableException("This should be handled by if."),
