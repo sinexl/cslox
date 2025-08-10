@@ -20,7 +20,7 @@ public class Interpreter : IExpressionVisitor<object?>
                 object? right = Evaluate(expr);
                 return op.Type switch
                 {
-                    TokenType.Minus => right.ToLoxDouble(expr),
+                    TokenType.Minus => -right.ToLoxDouble(expr),
                     TokenType.Bang => !right.ToLoxBool(),
                     _ => throw new UnreachableException("This should be unreachable")
                 };
