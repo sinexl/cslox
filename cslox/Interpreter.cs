@@ -30,23 +30,25 @@ public class Interpreter : IExpressionVisitor<object?>
                 object? leftValue = Evaluate(left);
                 object? rightValue = Evaluate(right);
 
-                if (e is Addition)
+                switch (e)
                 {
-                    return (leftValue, rightValue) switch
-                    {
-                        (string a, string b) => a + b,
-                        (double a, double b) => a + b,
-                        _ => throw new LoxCastException(
-                            "Both operands of addition should be either numbers or strings.",
-                            left.Location, e)
-                    };
+                    case Addition:
+                        return (leftValue, rightValue) switch
+                        {
+                            (string a, string b) => a + b,
+                            (double a, double b) => a + b,
+                            _ => throw new LoxCastException(
+                                "Both operands of addition should be either numbers or strings.",
+                                left.Location, e)
+                        };
+                    case Equality: return leftValue.LoxEquals(rightValue);
+                    case Inequality: return !leftValue.LoxEquals(rightValue);
                 }
 
                 var leftNumber = leftValue.ToLoxDouble(left);
                 var rightNumber = rightValue.ToLoxDouble(right);
                 return e switch
                 {
-                    Addition => throw new UnreachableException("This should be handled by if."),
                     Subtraction => leftNumber - rightNumber,
                     Multiplication => leftNumber * rightNumber,
                     Division => leftNumber / rightNumber,
@@ -54,9 +56,10 @@ public class Interpreter : IExpressionVisitor<object?>
                     GreaterEqual => leftNumber >= rightNumber,
                     Less => leftNumber < rightNumber,
                     LessEqual => leftNumber <= rightNumber,
-                    Equality => leftValue.LoxEquals(rightValue),
-                    Inequality => !leftValue.LoxEquals(rightValue),
-                    _ => throw new UnreachableException("This should be unreachable")
+                    var other =>
+                        throw new
+                            UnreachableException(
+                                $"{other.GetType().Name}: This should be handled by previous switch case")
                 };
             }
         }
@@ -99,7 +102,7 @@ public static class InterpreterExtensions
             null => "nil",
             string s => s,
             //                             G in this case removes .0
-            double d => d.ToString("G",CultureInfo.InvariantCulture), 
+            double d => d.ToString("G", CultureInfo.InvariantCulture),
             _ => obj.ToString() ?? throw new UnreachableException("This should be unreachable")
         };
     }
@@ -128,7 +131,6 @@ public class LoxRuntimeException : Exception
     }
 
     public override string ToString() => $"{Location}: {Message}";
-
 }
 
 public class LoxCastException : LoxRuntimeException
