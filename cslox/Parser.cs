@@ -48,6 +48,7 @@ public class Parser
         _tokens = tokens.ToList();
     }
 
+    // TODO: Parser should collect errors into Array/List of errors instead of reporting them on go 
     public Expression? ParseExpression()
     {
         return ParseSequence();

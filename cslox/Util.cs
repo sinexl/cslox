@@ -14,6 +14,23 @@ public static class Util
     {
         Console.Error.WriteLine($"{loc}: ({where}) {message}");
     }
+
+    // returns true if no errors were reported. 
+    public static bool ReportAllErrorsIfSome(IList<Error> errors)
+    {
+        if (errors.Count == 0) return true;
+        foreach (var error in errors)
+        {
+            Console.WriteLine(error);
+        }
+
+        return false;
+    }
+
+    public static void ReportException(LoxRuntimeException exception)
+    {
+        Console.Error.WriteLine($"{exception}"); 
+    }
 }
 
 public static class Extensions
@@ -32,15 +49,15 @@ public static class Extensions
 
     public static string ArrayTreePrint(this IEnumerable<Expression> array, int indent = 0)
     {
-        var sb = new StringBuilder(); 
-        var tab = new string(' ', indent * 2);  
+        var sb = new StringBuilder();
+        var tab = new string(' ', indent * 2);
         foreach (var e in array)
         {
             var asStr = e.TreePrint(indent + 2);
-            sb.Append($"{tab}{e.TreePrint(indent + 1)}"); 
+            sb.Append($"{tab}{e.TreePrint(indent + 1)}");
         }
 
-        return sb.ToString(); 
+        return sb.ToString();
     }
 
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';

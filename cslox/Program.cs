@@ -27,30 +27,35 @@ return Main(args);
 [Pure]
 Error[] RunCode(string src, string? filePath = null)
 {
-    Console.WriteLine($"src: {src}");
+    var interpreter = new Interpreter(); 
+    var errors = new List<Error>(); 
     var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
-    var printer = new PrefixPrinter(); 
     var tokens = lexer.Accumulate();
+    errors.AddRange(lexer.Errors);
     var parser = new Parser(tokens); 
-    if (lexer.Errors.Count > 0) return lexer.Errors.ToArray();
     var expression = parser.ParseExpression();
+    Console.Write(expression);
+    // errors.AddRange();
     // TODO: Proper error handling
     if (expression is null)
     {
-        Console.WriteLine("Parse error occured");
-        Environment.Exit(65);
+        Console.WriteLine("Error: Parse error occured."); 
     } 
 
-
-    Console.WriteLine(printer.Print(expression));
-    return [];
+    if (errors.Count == 0 && expression is not null)
+    {
+        var result = interpreter.Evaluate(expression); 
+        Console.WriteLine(result.LoxPrint());
+    }
+    Util.ReportAllErrorsIfSome(errors);
+    return errors.ToArray(); 
 }
 
 void RunFile(string filePath)
 {
     var src = File.ReadAllText(filePath);
     var errors = RunCode(src, filePath);
-    var exit = ReportAllErrorsIfSome(errors);
+    var exit = Util.ReportAllErrorsIfSome(errors);
     if (exit)
     {
         return;
@@ -67,13 +72,10 @@ void Prompt()
         if (line is null || line == ":quit")
             break;
         var errors = RunCode(line);
-        var exit = ReportAllErrorsIfSome(errors);
-        Console.WriteLine($"Found {errors.Length} errors");
+        var exit = Util.ReportAllErrorsIfSome(errors);
+        if (errors.Length > 0)
+        {
+            Console.WriteLine($"Found {errors.Length} errors");
+        }
     }
-}
-
-
-bool ReportAllErrorsIfSome(Error[] errors1)
-{
-    throw new NotImplementedException();
 }

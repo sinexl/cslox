@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using cslox.Ast.Generated;
 
 namespace cslox;
@@ -89,6 +90,18 @@ public static class InterpreterExtensions
     {
         if (obj is double) return Convert.ToDouble(obj);
         throw new LoxCastException($"Could not perform cast of `{obj}` to double", e.Location, e);
+    }
+
+    public static string LoxPrint(this object? obj)
+    {
+        return obj switch
+        {
+            null => "nil",
+            string s => s,
+            //                             G in this case removes .0
+            double d => d.ToString("G",CultureInfo.InvariantCulture), 
+            _ => obj.ToString() ?? throw new UnreachableException("This should be unreachable")
+        };
     }
 }
 
