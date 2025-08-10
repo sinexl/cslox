@@ -20,7 +20,7 @@ public class ParserTest
         return new Parser(tokens);
     }
 
-    private Parser SetupParserString(string src, string filePath = null)
+    private Parser SetupParserString(string src, string? filePath = null)
     {
         var lexer = new Lexer(src, "<test>");
         return new Parser(lexer.Accumulate());
@@ -33,7 +33,7 @@ public class ParserTest
         var parser = SetupParserFile(path);
         var expression = parser.ParseExpression();
         Assert.NotNull(expression);
-        string str = expression.ToString();
+        string str = expression.ToString()!;
         Assert.NotNull(str);
         _output.WriteLine(str);
     }
