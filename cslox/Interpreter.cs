@@ -8,7 +8,7 @@ public class Interpreter : IExpressionVisitor<object?>
     public object? Visit<TExpression>(TExpression expression) where TExpression : Expression
         => Evaluate(expression);
 
-    private object? Evaluate<TExpression>(TExpression expression) where TExpression : Expression
+    public object? Evaluate<TExpression>(TExpression expression) where TExpression : Expression
     {
         switch (expression)
         {
@@ -17,39 +17,35 @@ public class Interpreter : IExpressionVisitor<object?>
             case Unary(var expr, var op):
             {
                 object? right = Evaluate(expr);
-                try
+                return op.Type switch
                 {
-                    return op.Type switch
-                    {
-                        TokenType.Minus => -Convert.ToDouble(right),
-                        TokenType.Bang => !right.ToLoxBool(),
-                        _ => throw new UnreachableException("This should be unreachable")
-                    };
-                }
-                catch (InvalidCastException)
-                {
-                    // TODO: create class for Lox Runtime Exceptions and throw them.  
-                    throw;
-                }
+                    TokenType.Minus => right.ToLoxDouble(expr),
+                    TokenType.Bang => !right.ToLoxBool(),
+                    _ => throw new UnreachableException("This should be unreachable")
+                };
             }
             case Binary(var left, var right) e:
             {
                 object? leftValue = Evaluate(left);
                 object? rightValue = Evaluate(right);
 
-                // Todo: Check types before converting and report error properly instead of using 
-                //  InvalidCastException 
-                var rightNumber = Convert.ToDouble(rightValue);
-                var leftNumber = Convert.ToDouble(leftValue);
-                return e switch
+                if (e is Addition)
                 {
-                    Addition => (leftValue, rightValue) switch
+                    return (leftValue, rightValue) switch
                     {
                         (string a, string b) => a + b,
                         (double a, double b) => a + b,
-                        // TODO: Throw lox runtime exception
-                        _ => throw new ArgumentOutOfRangeException()
-                    },
+                        _ => throw new LoxCastException(
+                            "Both operands of addition should be either numbers or strings.",
+                            left.Location, e)
+                    };
+                }
+
+                var rightNumber = leftValue.ToLoxDouble(left);
+                var leftNumber = rightValue.ToLoxDouble(right);
+                return e switch
+                {
+                    Addition => throw new UnreachableException("This should be handled by if."),
                     Subtraction => leftNumber - rightNumber,
                     Multiplication => leftNumber * rightNumber,
                     Division => leftNumber / rightNumber,
@@ -84,11 +80,16 @@ public static class InterpreterExtensions
     public static bool LoxEquals(this object? left, object? right) => (left, right) switch
     {
         (null, null) => true,
-        (null, _) => false,
-        (_, null) => false,
+        (null, _) or (_, null) => false,
         (double a, double b) => Math.Abs(a - b) < Tolerance,
         var (a, b) => a == b,
     };
+
+    public static double ToLoxDouble(this object? obj, Expression e)
+    {
+        if (obj is double) return Convert.ToDouble(obj);
+        throw new LoxCastException($"Could not perform cast of `{obj}` to double", e.Location, e);
+    }
 }
 
 public class LoxRuntimeException : Exception
@@ -111,5 +112,25 @@ public class LoxRuntimeException : Exception
         : base($"{location}: {message}", inner)
     {
         Location = location;
+    }
+
+    public override string ToString() => $"{Location}: {Message}";
+
+}
+
+public class LoxCastException : LoxRuntimeException
+{
+    Expression? Expression { get; init; }
+
+    public LoxCastException(string message, SourceLocation location, Expression? expression = null) : base(message,
+        location)
+    {
+        Expression = expression;
+    }
+
+    public LoxCastException(string message, SourceLocation location, Exception inner, Expression? expression = null) :
+        base(message, location, inner)
+    {
+        Expression = expression;
     }
 }
