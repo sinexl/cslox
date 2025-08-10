@@ -34,8 +34,15 @@ public class PrefixPrinter : IExpressionVisitor<string>
             }
             case Literal (var value):
             {
-                if (value is null) return "nil";
-                return value.ToString() ?? throw new UnreachableException("should never be null");
+                return value switch
+                {
+                    string s => $"\"{s}\"",
+                    null => "nil",
+                    bool b => b
+                        ? "true"
+                        : "false", // for some reason bool.ToString returns Capitalized value (True, False)
+                    _ => value.ToString() ?? throw new UnreachableException("should never be null")
+                };
             }
             case Grouping(var inner):
                 return Parenthesise("group", inner);
@@ -47,9 +54,9 @@ public class PrefixPrinter : IExpressionVisitor<string>
         // This is how you do static assertions in this language. 
         // Welcome to C# 
         byte staticAssert = Expression.InheritorsAmount == 16 ? 0 : -1;
-        _ = staticAssert; 
-        
-        throw new UnreachableException("Not all cases are handled"); 
+        _ = staticAssert;
+
+        throw new UnreachableException("Not all cases are handled");
     }
 
     private string Sequence(string name, Expression[] expressions)

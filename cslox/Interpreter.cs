@@ -100,6 +100,7 @@ public static class InterpreterExtensions
         return obj switch
         {
             null => "nil",
+            bool b => b ? "true" : "false", // for some reason bool.ToString() returns Capitalized value (True, False) 
             string s => s,
             //                             G in this case removes .0
             double d => d.ToString("G", CultureInfo.InvariantCulture),
