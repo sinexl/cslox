@@ -290,8 +290,8 @@ def main():
     statement_ast = \
         Ast(statement_name, None, abstract=True, custom_code=[define_inheritors_amount, define_source_loc],
             visitor_name=statement_visitor_name, inheritors=[
-                Ast("ExpressionStatement", f"{statement_name} Expression"),
-                Ast("Print", f"{statement_name} Expression"),
+                Ast("ExpressionStatement", f"{expression_name} Expression"),
+                Ast("Print", f"{expression_name} Expression"),
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
