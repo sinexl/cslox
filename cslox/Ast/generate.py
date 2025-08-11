@@ -113,7 +113,8 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
     f.writeln("{")
     # for type_name in types:
     #     f.writeln(f"    T Visit({type_name} _{type_name.lower()});")
-    f.writeln(f"{TAB}TResult Visit<TExpression>(TExpression expression) where TExpression : {base_class};")
+    f.writeln(
+        f"{TAB}TResult Visit<T{base_class}>(T{base_class} {type_to_csharp_name(base_class)}) where T{base_class} : {base_class};")
     f.writeln("}\n")
 
 
