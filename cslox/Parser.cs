@@ -9,16 +9,16 @@ namespace cslox;
 // TODO: Ternary operator.
 /*
 Syntax:
-        expression     → sequence ;
-        sequence       → equality ( (  "," ) equality )* ;
-        equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-        comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-        term           → factor ( ( "-" | "+" ) factor )* ;
-        factor         → unary ( ( "/" | "*" ) unary )* ;
-        unary          → ( "!" | "-" ) unary
-                       | primary ;
-        primary        → NUMBER | STRING | "true" | "false" | "nil"
-                       | "(" expression ")" ;
+        expression            → sequence ;
+        sequence              → equality ( (  "," ) equality )* ;
+        equality              → comparison ( ( "!=" | "==" ) comparison )* ;
+        comparison            → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+        term                  → factor ( ( "-" | "+" ) factor )* ;
+        factor                → unary ( ( "/" | "*" ) unary )* ;
+        unary                 → ( "!" | "-" ) unary
+                              | primary ;
+        primary               → NUMBER | STRING | "true" | "false" | "nil"
+                              | "(" expression ")" ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
         Name          Operators      Associates
