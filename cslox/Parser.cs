@@ -9,6 +9,11 @@ namespace cslox;
 // TODO: Ternary operator.
 /*
 Syntax:
+        program               → statement* EOF ;
+        statement             → expressionStatement | printStatement ;
+        expressionStatement   → expression ";" ;
+        printStatement        → "print" expression ";" ;
+
         expression            → sequence ;
         sequence              → equality ( (  "," ) equality )* ;
         equality              → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -47,6 +52,50 @@ public class Parser
         _state.Current = 0;
         _tokens = tokens.ToList();
     }
+
+    public Statement[]? Parse()
+    {
+        List<Statement> statements = new();
+        while (!IsEof())
+        {
+            var statement = ParseStatement();
+            if (statement is null) return null;
+            statements.Add(statement);
+        }
+
+        return statements.ToArray();
+    }
+
+    public Statement? ParseStatement()
+    {
+        var state = SaveState();
+        if (Match(TokenType.Print))
+        {
+            RestoreState(state);
+            return ParsePrintStatement();
+        }
+
+        return ParseExpressionStatement();
+    }
+
+
+    public Statement? ParsePrintStatement()
+    {
+        SourceLocation location = PeekToken().Location;
+        if (!ExpectAndConsume(TokenType.Print)) return null;
+        Expression? expr = ParseExpression();
+        if (!ExpectAndConsume(TokenType.Semicolon) || expr is null) return null;
+        return new Print(expr) { Location = location };
+    }
+
+    public Statement? ParseExpressionStatement()
+    {
+        SourceLocation location = PeekToken().Location;
+        Expression? expr = ParseExpression();
+        if (!ExpectAndConsume(TokenType.Semicolon) || expr is null) return null;
+        return new ExpressionStatement(expr) { Location = location };
+    }
+
 
     // TODO: Parser should collect errors into Array/List of errors instead of reporting them on go 
     public Expression? ParseExpression()
@@ -154,8 +203,8 @@ public class Parser
             if (right is null) return null;
             left = op.Type switch
             {
-                TokenType.Star => new Multiplication(left, right) {Location = op.Location},
-                TokenType.Slash => new Division(left, right) {Location = op.Location},
+                TokenType.Star => new Multiplication(left, right) { Location = op.Location },
+                TokenType.Slash => new Division(left, right) { Location = op.Location },
                 _ => throw new UnreachableException("Unreachable")
             };
         }
@@ -172,7 +221,7 @@ public class Parser
             Expression? inner = ParseUnary();
             if (inner is null) return null;
 
-            return new Unary(inner, op) {Location = op.Location}; 
+            return new Unary(inner, op) { Location = op.Location };
         }
 
         return ParsePrimary();
@@ -188,14 +237,14 @@ public class Parser
 
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
-        
+
         if (ExpectAndConsume(TokenType.LeftParen))
         {
-            SourceLocation parenthesisLoc = PeekPrevious().Location; 
+            SourceLocation parenthesisLoc = PeekPrevious().Location;
             Expression? expr = ParseExpression();
             if (expr is null) return null;
             if (!ExpectAndConsume(TokenType.RightParen)) return null;
-            return new Grouping(expr) {Location = parenthesisLoc};
+            return new Grouping(expr) { Location = parenthesisLoc };
         }
 
         Error(PeekToken().Location, "Expected expression");
@@ -290,17 +339,17 @@ public class Parser
         var self = new Parser(tokens);
         tokens.ForEach(t => Console.WriteLine($"{t.Location}: {t.Type}"));
         Console.WriteLine("\n");
-        var expression = self.ParseExpression();
+        var statements = self.Parse();
 
-        if (expression is null)
+        if (statements is null)
         {
             Console.Error.WriteLine("Parse Error occured. Exiting...");
             Environment.Exit(1);
         }
 
-        // Console.WriteLine(expression);
-        Console.WriteLine(locPrinter.Print(expression));
-        Console.WriteLine(prefixPrinter.Print(expression));
+        statements.ForEach(Console.WriteLine);
+        // Console.WriteLine(locPrinter.Print(statements));
+        // Console.WriteLine(prefixPrinter.Print(statements));
     }
 }
 
