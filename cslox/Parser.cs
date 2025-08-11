@@ -47,6 +47,8 @@ public class Parser
 
     private State _state;
 
+    public List<Error> Errors { get; } = new();
+
     public Parser(IEnumerable<Token> tokens)
     {
         _state.Current = 0;
@@ -97,7 +99,6 @@ public class Parser
     }
 
 
-    // TODO: Parser should collect errors into Array/List of errors instead of reporting them on go 
     public Expression? ParseExpression()
     {
         return ParseSequence();
@@ -307,14 +308,14 @@ public class Parser
         }
 
         string str = sb.ToString();
-        Util.Report(got.Location,
-            message is not null
-                ? $"error: {message}. Expected {str}, but got {got.Type.Humanize()}"
-                : $"error: expected {str}, but got {got.Type.Humanize()}");
+        Errors.Add(new Error(got.Location,
+                message is not null
+                    ? $"error: {message}. Expected {str}, but got {got.Type.Humanize()}"
+                    : $"error: expected {str}, but got {got.Type.Humanize()}"));
     }
 
     private void Error(TokenType expected, Token got, string? message = null) => Error([expected], got, message);
-    private void Error(SourceLocation location, string message) => Util.Report(location, $"error: {message}");
+    private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, $"error: {message}"));
 
     // As suggested in the book, we use statements as synchronization point. 
     // When an error occurs, we treat the current statement as malformed and skip all tokens until the next statement 
