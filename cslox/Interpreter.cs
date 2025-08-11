@@ -4,10 +4,35 @@ using cslox.Ast.Generated;
 
 namespace cslox;
 
-public class Interpreter : IExpressionVisitor<object?>
+public class Interpreter : IExpressionVisitor<object?>  ,IStatementVisitor<Unit>
 {
-    public object? Visit<TExpression>(TExpression expression) where TExpression : Expression
+    object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression)
         => Evaluate(expression);
+
+    Unit IStatementVisitor<Unit>.Visit<TStatement>(TStatement statement)
+    {
+        Execute(statement);
+        return new Unit(); 
+    }
+
+
+    public void Execute<TStatement>(TStatement statement) where TStatement : Statement
+    {
+        switch (statement)
+        {
+            case ExpressionStatement(var expression):
+                Evaluate(expression);
+                break;
+            case Print(var expression):
+                Console.WriteLine(Evaluate(expression).LoxPrint());
+                break;
+            default:
+                throw new UnreachableException("Not all cases are handled");
+        }
+
+        byte staticAssert = Statement.InheritorsAmount == 3 ? 0 : -1;
+        _ = staticAssert;
+    }
 
     public object? Evaluate<TExpression>(TExpression expression) where TExpression : Expression
     {

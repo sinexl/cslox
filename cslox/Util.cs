@@ -21,7 +21,7 @@ public static class Util
         if (errors.Count == 0) return true;
         foreach (var error in errors)
         {
-            Console.WriteLine(error);
+            Console.Error.WriteLine(error);
         }
 
         return false;
@@ -83,4 +83,15 @@ public record struct SourceLocation()
 public record class Error(SourceLocation Location, string Message)
 {
     public override string ToString() => $"{Location}: {Message}";
+}
+
+public struct Unit : IEquatable<Unit>
+{
+    public override string ToString() => "()";
+    public bool Equals(Unit other) => true;
+    public override bool Equals(object? obj) => obj is Unit;
+
+    public static bool operator ==(Unit _, Unit __) => true;
+    public static bool operator !=(Unit _, Unit __) => false;
+    public override int GetHashCode() => 0;
 }
