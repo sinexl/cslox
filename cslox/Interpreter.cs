@@ -51,7 +51,7 @@ public class Interpreter : IExpressionVisitor<object?>
                 {
                     Subtraction => leftNumber - rightNumber,
                     Multiplication => leftNumber * rightNumber,
-                    Division => leftNumber.LoxDivide(rightNumber, e.Location), 
+                    Division => leftNumber.LoxDivide(rightNumber, e.Location),
                     Greater => leftNumber > rightNumber,
                     GreaterEqual => leftNumber >= rightNumber,
                     Less => leftNumber < rightNumber,
@@ -112,7 +112,7 @@ public static class InterpreterExtensions
     {
         if (right == 0.0)
             throw new LoxZeroDivideException("Zero division is not allowed.", loc);
-        return left / right; 
+        return left / right;
     }
 }
 

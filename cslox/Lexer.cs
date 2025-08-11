@@ -20,6 +20,7 @@ public record struct LexerState
         {
             offset -= 1;
         }
+
         return new SourceLocation(file: file, line: LineNumber, offset);
     }
 

@@ -27,28 +27,29 @@ return Main(args);
 [Pure]
 Error[] RunCode(string src, string? filePath = null)
 {
-    var interpreter = new Interpreter(); 
-    var errors = new List<Error>(); 
+    var interpreter = new Interpreter();
+    var errors = new List<Error>();
     var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
     var tokens = lexer.Accumulate();
     errors.AddRange(lexer.Errors);
-    var parser = new Parser(tokens); 
+    var parser = new Parser(tokens);
     var expression = parser.ParseExpression();
     Console.Write(expression);
     // errors.AddRange();
     // TODO: Proper error handling
     if (expression is null)
     {
-        Console.WriteLine("Error: Parse error occured."); 
-    } 
+        Console.WriteLine("Error: Parse error occured.");
+    }
 
     if (errors.Count == 0 && expression is not null)
     {
-        var result = interpreter.Evaluate(expression); 
+        var result = interpreter.Evaluate(expression);
         Console.WriteLine(result.LoxPrint());
     }
+
     Util.ReportAllErrorsIfSome(errors);
-    return errors.ToArray(); 
+    return errors.ToArray();
 }
 
 void RunFile(string filePath)

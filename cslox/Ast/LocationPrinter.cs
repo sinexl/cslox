@@ -12,14 +12,15 @@ public class LocationPrinter : IExpressionVisitor<string>
 
     public string Print(Expression expression, int indentation = 0)
     {
-        const int spacesPerTab = 4; 
+        const int spacesPerTab = 4;
         var sb = new StringBuilder();
-        int previousIndex; 
+        int previousIndex;
+
         void Impl(Expression expr, int indent)
         {
             string tabulation = new(' ', indent * spacesPerTab);
             sb.Append($"{expr.Location}:{tabulation} {expr.GetType().Name}\n");
-            previousIndex = sb.Length; 
+            previousIndex = sb.Length;
             switch (expr)
             {
                 case Grouping(var inner):
@@ -27,7 +28,8 @@ public class LocationPrinter : IExpressionVisitor<string>
                     break;
                 case Literal (var value):
                     sb[previousIndex - 1] = ' '; // remove the newline 
-                    sb.Insert(previousIndex, $"{value}\n"); break;
+                    sb.Insert(previousIndex, $"{value}\n");
+                    break;
                 case Unary(var inner, var op):
                     Impl(inner, indent + 1);
                     break;
@@ -44,7 +46,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                     break;
             }
         }
-        
+
         byte staticAssert = Expression.InheritorsAmount == 16 ? 0 : -1;
         _ = staticAssert;
 

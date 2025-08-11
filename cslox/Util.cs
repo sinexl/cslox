@@ -29,7 +29,7 @@ public static class Util
 
     public static void ReportException(LoxRuntimeException exception)
     {
-        Console.Error.WriteLine($"{exception}"); 
+        Console.Error.WriteLine($"{exception}");
     }
 }
 

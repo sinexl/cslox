@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="QuickTests\parser.cslox">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="QuickTests\lexer.cslox">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+        <None Update="QuickTests\parser.cslox">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="QuickTests\lexer.cslox">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>
