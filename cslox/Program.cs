@@ -24,40 +24,13 @@ int Main(string[] args)
 
 return Main(args);
 
-[Pure]
-Error[] RunCode(string src, string? filePath = null)
-{
-    var interpreter = new Interpreter();
-    var errors = new List<Error>();
-    var lexer = new Lexer(src, filePath: filePath ?? "<REPL>");
-    var tokens = lexer.Accumulate();
-    errors.AddRange(lexer.Errors);
-    var parser = new Parser(tokens);
-    var expression = parser.ParseExpression();
-    Console.Write(expression);
-    // errors.AddRange();
-    // TODO: Proper error handling
-    if (expression is null)
-    {
-        Console.WriteLine("Error: Parse error occured.");
-    }
-
-    if (errors.Count == 0 && expression is not null)
-    {
-        var result = interpreter.Evaluate(expression);
-        Console.WriteLine(result.LoxPrint());
-    }
-
-    Util.ReportAllErrorsIfSome(errors);
-    return errors.ToArray();
-}
 
 void RunFile(string filePath)
 {
+    var runner = new Runner(filePath); 
     var src = File.ReadAllText(filePath);
-    var errors = RunCode(src, filePath);
-    var exit = Util.ReportAllErrorsIfSome(errors);
-    if (exit)
+    var errors = runner.Run(src);
+    if (errors.Any())
     {
         return;
     }
@@ -65,6 +38,7 @@ void RunFile(string filePath)
 
 void Prompt()
 {
+    var runner = new Runner("<REPL>"); 
     Console.WriteLine("NOTE: Enter :quit or Press Ctrl+D to quit.");
     while (true)
     {
@@ -72,11 +46,11 @@ void Prompt()
         string? line = Console.ReadLine();
         if (line is null || line == ":quit")
             break;
-        var errors = RunCode(line);
-        var exit = Util.ReportAllErrorsIfSome(errors);
+        
+        var (errors, exceptions) = runner.Run(line);
         if (errors.Length > 0)
-        {
-            Console.WriteLine($"Found {errors.Length} errors");
-        }
+            Console.WriteLine($"Found {errors.Length} errors.");
+        if (exceptions.Length > 0) 
+            Console.WriteLine($"{exceptions.Length} exceptions were thrown.");
     }
 }
