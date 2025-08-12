@@ -84,9 +84,12 @@ public class PrefixPrinter : IExpressionVisitor<string>
     {
         var self = new PrefixPrinter();
         var expression = new Subtraction(
-            new Literal(10),
-            new Literal(12)
-        );
+            new Literal(10) {Location = new()}, 
+            new Literal(12) {Location = new()}
+        )
+        {
+            Location = new() 
+        };
 
         Console.WriteLine(self.Print(expression));
     }

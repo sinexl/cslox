@@ -293,7 +293,7 @@ def main():
             visitor_name=statement_visitor_name, inheritors=[
                 Ast("ExpressionStatement", f"{expression_name} Expression"),
                 Ast("Print", f"{expression_name} Expression"),
-                Ast("Var", f"string Name, Expression? Initializer"),
+                Ast("VarDeclaration", f"string Name, Expression? Initializer"),
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
