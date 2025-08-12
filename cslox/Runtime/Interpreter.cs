@@ -3,15 +3,22 @@ using cslox.Ast.Generated;
 
 namespace cslox.Runtime;
 
-public class Interpreter : IExpressionVisitor<object?>  ,IStatementVisitor<Unit>
+public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
+    public ExecutionContext Context { get; init; }
+
+    public Interpreter()
+    {
+        Context = new();
+    }
+
     object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression)
         => Evaluate(expression);
 
     Unit IStatementVisitor<Unit>.Visit<TStatement>(TStatement statement)
     {
         Execute(statement);
-        return new Unit(); 
+        return new Unit();
     }
 
 
@@ -25,11 +32,22 @@ public class Interpreter : IExpressionVisitor<object?>  ,IStatementVisitor<Unit>
             case Print(var expression):
                 Console.WriteLine(Evaluate(expression).LoxPrint());
                 break;
+            case VarDeclaration(var name, var initializer):
+            {
+                object? value = null;
+                if (initializer is not null)
+                {
+                    value = Evaluate(initializer);
+                }
+
+                Context.Define(name, value);
+                break;
+            }
             default:
                 throw new UnreachableException("Not all cases are handled");
         }
 
-        byte staticAssert = Statement.InheritorsAmount == 3 ? 0 : -1;
+        byte staticAssert = Statement.InheritorsAmount == 4 ? 0 : -1;
         _ = staticAssert;
     }
 
@@ -86,9 +104,21 @@ public class Interpreter : IExpressionVisitor<object?>  ,IStatementVisitor<Unit>
                                 $"{other.GetType().Name}: This should be handled by previous switch case")
                 };
             }
+            case ReadVariable(var name) e:
+            {
+                try
+                {
+                    return Context.Get(name); 
+                }
+                catch (ArgumentException)
+                {
+                    throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location); 
+                }
+                break;
+            }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 16 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 17 ? 0 : -1;
         _ = staticAssert;
         throw new UnreachableException("Not all cases are handled for some reason");
     }

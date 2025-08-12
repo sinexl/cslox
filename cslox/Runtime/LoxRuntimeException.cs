@@ -55,3 +55,10 @@ public class LoxCastException : LoxRuntimeException
         Expression = expression;
     }
 }
+
+public class LoxVariableUndefinedException : LoxRuntimeException
+{
+    public LoxVariableUndefinedException(string message, SourceLocation location) : base(message, location)
+    {
+    } 
+}
