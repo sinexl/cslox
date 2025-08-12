@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using cslox.Runtime;
 using JetBrains.Annotations;
 using Xunit;
@@ -91,6 +92,33 @@ public class InterpreterTest
     public static void PrintUnexistingVariable(string varName)
     {
         Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements($"print {varName};"));
+    }
+
+    [Fact]
+    public static void ReadingFromVariables()
+    {
+        string src = """
+                     var b = 10; 
+                     print b; 
+                     """;
+        var result = RecordInterpreterOutput(src).Trim(); 
+        Assert.Equal("10", result);
+    }
+
+    public static string RecordInterpreterOutput(string src)
+    {
+        using var sw = new StringWriter();
+        var original = Console.Out;
+        Console.SetOut(sw);
+        try
+        {
+            InterpretStatements(src);
+        }
+        finally
+        {
+            Console.SetOut(original);
+        }
+        return sw.ToString(); 
     }
 
     private static void InterpretStatements(string src)
