@@ -9,7 +9,9 @@ namespace cslox;
 // TODO: Ternary operator.
 /*
 Syntax:
-        program               → statement* EOF ;
+        program               → statement* EOF;
+        declaration           → varDeclaration | statement
+        varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
@@ -22,7 +24,7 @@ Syntax:
         factor                → unary ( ( "/" | "*" ) unary )* ;
         unary                 → ( "!" | "-" ) unary
                               | primary ;
-        primary               → NUMBER | STRING | "true" | "false" | "nil"
+        primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER
                               | "(" expression ")" ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
@@ -60,12 +62,40 @@ public class Parser
         List<Statement> statements = new();
         while (!IsEof())
         {
-            var statement = ParseStatement();
+            var statement = ParseDeclaration();
             if (statement is null) return null;
             statements.Add(statement);
         }
 
         return statements.ToArray();
+    }
+
+    public Statement? ParseDeclaration()
+    {
+        var state = SaveState(); 
+        if (Match(TokenType.Var))
+        {
+            RestoreState(state);
+            return ParseVariableDeclaration() ?? SyncAndNull<Statement>(); 
+        }
+        
+        return ParseStatement() ?? SyncAndNull<Statement>(); 
+    }
+
+    private Statement? ParseVariableDeclaration()
+    {
+        SourceLocation location = PeekToken().Location; 
+        if (!ExpectAndConsume(TokenType.Var)) return null; 
+        if (!ExpectAndConsume(TokenType.Identifier, out var token)) return null;
+        string name = token.Lexeme; 
+        Expression? initializer = null;
+        if (Match(TokenType.Equal))
+        {
+            initializer = ParseExpression(); 
+            if (initializer is null) return null; 
+        }
+        ExpectAndConsume(TokenType.Semicolon);
+        return new VarDeclaration(name, initializer) { Location = location }; 
     }
 
     public Statement? ParseStatement()
@@ -239,6 +269,7 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
 
+        if (Match(TokenType.Identifier)) return new ReadVariable(PeekPrevious().Lexeme) { Location = loc }; 
         if (ExpectAndConsume(TokenType.LeftParen))
         {
             SourceLocation parenthesisLoc = PeekPrevious().Location;
@@ -281,17 +312,21 @@ public class Parser
     private void RestoreState(State state) => _state = state;
 
     [Pure]
-    private bool ExpectAndConsume(TokenType expected)
+    private bool ExpectAndConsume(TokenType expected, out Token result)
     {
         if (PeekToken().Type == expected)
         {
+            result = PeekToken(); 
             SkipToken();
             return true;
         }
 
         Error(expected, PeekToken());
+        result = PeekToken(); 
         return false;
     }
+    
+    private bool ExpectAndConsume(TokenType expected) => ExpectAndConsume(expected, out _); 
 
     private void Error(Span<TokenType> expected, Token got, string? message = null)
     {
@@ -309,13 +344,19 @@ public class Parser
 
         string str = sb.ToString();
         Errors.Add(new Error(got.Location,
-                message is not null
-                    ? $"error: {message}. Expected {str}, but got {got.Type.Humanize()}"
-                    : $"error: expected {str}, but got {got.Type.Humanize()}"));
+            message is not null
+                ? $"error: {message}. Expected {str}, but got {got.Type.Humanize()}"
+                : $"error: expected {str}, but got {got.Type.Humanize()}"));
     }
 
     private void Error(TokenType expected, Token got, string? message = null) => Error([expected], got, message);
     private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, $"error: {message}"));
+    
+    private T? SyncAndNull<T>()
+    {
+        SynchronizeToStatement();
+        return default;
+    }
 
     // As suggested in the book, we use statements as synchronization point. 
     // When an error occurs, we treat the current statement as malformed and skip all tokens until the next statement 
@@ -330,7 +371,7 @@ public class Parser
         }
     }
 
-    private Literal CreateLiteral(object? value) => new(value) { Location = PeekToken().Location };
+    private Literal CreateLiteral(object? value) => new(value) { Location = PeekPrevious().Location };
 
     public static void Test()
     {
@@ -348,7 +389,7 @@ public class Parser
             Environment.Exit(1);
         }
 
-        statements.ForEach(Console.WriteLine);
+        statements.ForEach(Console.WriteLine); 
         // Console.WriteLine(locPrinter.Print(statements));
         // Console.WriteLine(prefixPrinter.Print(statements));
     }
