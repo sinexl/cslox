@@ -1,9 +1,14 @@
+using cslox.Ast.Generated;
 using cslox.Runtime;
 
 namespace cslox;
 
 public class Runner
 {
+    // Events 
+    public event Action<Token[], IList<Error>>? OnTokenizerFinish; 
+    public event Action<IList<Statement>, IList<Error>>? OnParserFinish; 
+    // Fields 
     public Interpreter Interpreter;
     public bool Report { get; set; } = false;
 
@@ -34,11 +39,13 @@ public class Runner
         var lexer = new Lexer(src, FilePath);
         var tokens = lexer.Accumulate();
         // tokens.ForEach(Console.WriteLine);
+        OnTokenizerFinish?.Invoke(tokens, lexer.Errors);; 
         errors.AddRangeAndReport(lexer.Errors, Report);
 
         var parser = new Parser(tokens);
         var statements = parser.Parse();
         if (statements is null) return (errors.ToArray(), []);
+        OnParserFinish?.Invoke(statements, parser.Errors); 
         errors.AddRangeAndReport(parser.Errors, Report);
 
         List<LoxRuntimeException> runtimeErrors = [];

@@ -1,6 +1,5 @@
-﻿using System.Diagnostics.Contracts;
-using cslox;
-using cslox.Ast;
+﻿using cslox;
+using cslox.Ast.Generated;
 
 int Main(string[] args)
 {
@@ -16,7 +15,7 @@ int Main(string[] args)
     }
     else
     {
-        Prompt();
+        Repl();
     }
 
     return 0;
@@ -36,21 +35,57 @@ void RunFile(string filePath)
     }
 }
 
-void Prompt()
+void Repl()
 {
+    bool enableTokenDebugging = false;
+    bool enableAstDebugging = false;
+
+    Action<IList<Token>, IList<Error>> debugTokens =
+        (tokens, _) => { tokens.ForEach(Console.WriteLine); };
+
+    Action<IList<Statement>, IList<Error>> debugAst =
+        (list, _) => { list.ForEach(Console.WriteLine); };
+
+
     var runner = new Runner("<REPL>") { AllowRedefinition = true };
     Console.WriteLine("NOTE: Enter :quit or Press Ctrl+D to quit.");
-    while (true)
+    bool exit = false;
+    while (!exit)
     {
         Console.Write("> ");
         string? line = Console.ReadLine();
-        if (line is null || line == ":quit")
-            break;
+        switch (line)
+        {
+            case null:
+            case ":quit":
+                exit = true;
+                continue;
+            case ":clear":
+                Console.Clear();
+                continue;
+            case ":toggleTokens":
+                if (enableTokenDebugging) runner.OnTokenizerFinish -= debugTokens;
+                else runner.OnTokenizerFinish += debugTokens;
+                enableTokenDebugging = !enableTokenDebugging;
+                continue;
+            case ":toggleAst":
+                if (enableAstDebugging) runner.OnParserFinish -= debugAst;
+                else runner.OnParserFinish += debugAst;
+                enableAstDebugging = !enableAstDebugging;
+                continue;
+        }
 
         var (errors, exceptions) = runner.Run(line);
         if (errors.Length > 0)
             Console.WriteLine($"Found {errors.Length} errors.");
         if (exceptions.Length > 0)
+        {
+            foreach (var exception in exceptions)
+            {
+                Console.WriteLine(exception.Message);
+            }
+
             Console.WriteLine($"{exceptions.Length} exceptions were thrown.");
+        }
     }
 }
