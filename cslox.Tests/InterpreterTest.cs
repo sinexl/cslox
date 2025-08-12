@@ -15,71 +15,99 @@ public class InterpreterTest
         _output = output;
     }
 
-    [Fact]
-    public void Equality()
+    [Theory]
+    [InlineData("4 + 4", 8.0)]
+    [InlineData("4 - 4", 0.0)]
+    public void Equality(string expr, double expected)
     {
-        Assert.Equal(8.0, Interpret("4 + 4"));
-        Assert.Equal(0.0, Interpret("4 - 4"));
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
-    [Fact]
-    public void NilComparison()
+    [Theory]
+    [InlineData("nil == nil", true)]
+    [InlineData("nil != nil", false)]
+    public void NilComparison(string expr, bool expected)
     {
-        Assert.Equal(true, Interpret("nil == nil"));
-        Assert.Equal(false, Interpret("nil != nil"));
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
     [Fact]
     public void ZeroDivision()
     {
-        Assert.Throws<LoxZeroDivideException>(() => Interpret("4 / 0"));
+        Assert.Throws<LoxZeroDivideException>(() => InterpretExpr("4 / 0"));
     }
 
-    [Fact]
-    public void NegativeNumbersAndOrder()
+    [Theory]
+    [InlineData("-5 + 3", -2.0)]
+    [InlineData("3 + -5", -2.0)]
+    [InlineData("--5", 5.0)]
+    public void NegativeNumbersAndOrder(string expr, double expected)
     {
-        Assert.Equal(-2.0, Interpret("-5 + 3"));
-        Assert.Equal(-2.0, Interpret("3 + -5"));
-        Assert.Equal(5.0, Interpret("--5")); // double negation
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
     [Fact]
     public void FloatingPointPrecision()
     {
-        var result = Interpret("0.1 + 0.2");
+        var result = InterpretExpr("0.1 + 0.2");
         Assert.IsType<double>(result);
         Assert.True(Math.Abs((double)result! - 0.3) < 1e-9, "Precision should be within epsilon");
     }
 
-    [Fact]
-    public void NilInArithmeticShouldThrow()
+    [Theory]
+    [InlineData("nil + 1")]
+    [InlineData("1 - nil")]
+    public void NilInArithmeticShouldThrow(string expr)
     {
-        Assert.Throws<LoxCastException>(() => Interpret("nil + 1"));
-        Assert.Throws<LoxCastException>(() => Interpret("1 - nil"));
+        Assert.Throws<LoxCastException>(() => InterpretExpr(expr));
     }
 
-    [Fact]
-    public void DivisionByNegative()
+    [Theory]
+    [InlineData("4 / -2", -2.0)]
+    [InlineData("-4 / 2", -2.0)]
+    public void DivisionByNegative(string expr, double expected)
     {
-        Assert.Equal(-2.0, Interpret("4 / -2"));
-        Assert.Equal(-2.0, Interpret("-4 / 2"));
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
-
-    [Fact]
-    public void ParenthesesPrecedence()
+    [Theory]
+    [InlineData("(2 + 3) * 4", 20.0)]
+    [InlineData("2 + 3 * 4", 14.0)]
+    public void ParenthesesPrecedence(string expr, double expected)
     {
-        Assert.Equal(20.0, Interpret("(2 + 3) * 4"));
-        Assert.Equal(14.0, Interpret("2 + 3 * 4")); // multiplication before addition
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
-    [Fact]
-    public void LargeNumbers()
+    [Theory]
+    [InlineData("1000000 * 1000000", 1_000_000_000_000.0)]
+    public void LargeNumbers(string expr, double expected)
     {
-        Assert.Equal(1_000_000_000_000.0, Interpret("1000000 * 1000000"));
+        Assert.Equal(expected, InterpretExpr(expr));
     }
 
-    public static object? Interpret(string src)
+    [Theory]
+    [InlineData("foo")]
+    [InlineData("some")]
+    public static void PrintUnexistingVariable(string varName)
+    {
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements($"print {varName};"));
+    }
+
+    private static void InterpretStatements(string src)
+    {
+        var lexer = new Lexer(src, "<testcase>");
+        Assert.Empty(lexer.Errors);
+        var parser = new Parser(lexer.Accumulate());
+        var statements = parser.Parse();
+        Assert.NotNull(statements);
+        var interpreter = new Interpreter();
+        foreach (var c in statements)
+        {
+            interpreter.Execute(c);
+        }
+    }
+
+    private static object? InterpretExpr(string src)
     {
         var lexer = new Lexer(src, "<testcase>");
         Assert.Empty(lexer.Errors);
