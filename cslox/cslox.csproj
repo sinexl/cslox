@@ -14,6 +14,9 @@
         <None Update="QuickTests\lexer.cslox">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="QuickTests\interpreter.cslox">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>

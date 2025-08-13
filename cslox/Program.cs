@@ -28,10 +28,20 @@ void RunFile(string filePath)
 {
     var runner = new Runner(filePath) { AllowRedefinition = false };
     var src = File.ReadAllText(filePath);
-    var errors = runner.Run(src);
-    if (errors.Any())
+    var (errors, exceptions) = runner.Run(src);
+    if (errors.Length > 0)
     {
-        return;
+        foreach (var error in errors)
+            Console.WriteLine(error);
+        Console.WriteLine($"Found {errors.Length} errors.");
+    }
+
+    if (exceptions.Length > 0)
+    {
+        foreach (var exception in exceptions)
+            Console.WriteLine(exception.Message);
+
+        Console.WriteLine($"{exceptions.Length} exceptions were thrown.");
     }
 }
 
