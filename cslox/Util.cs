@@ -1,4 +1,5 @@
 using System.Text;
+using cslox.Ast.Generated;
 using cslox.Runtime;
 using Expression = cslox.Ast.Generated.Expression;
 
@@ -48,13 +49,25 @@ public static class Extensions
             action(x);
     }
 
+    // TODO: Remove duplicate code. (ArrayTreePrint for Expressions and Statements)
     public static string ArrayTreePrint(this IEnumerable<Expression> array, int indent = 0)
     {
         var sb = new StringBuilder();
         var tab = new string(' ', indent * 2);
         foreach (var e in array)
         {
-            var asStr = e.TreePrint(indent + 2);
+            sb.Append($"{tab}{e.TreePrint(indent + 1)}");
+        }
+
+        return sb.ToString();
+    }
+    
+    public static string ArrayTreePrint(this IEnumerable<Statement> array, int indent = 0)
+    {
+        var sb = new StringBuilder();
+        var tab = new string(' ', indent * 2);
+        foreach (var e in array)
+        {
             sb.Append($"{tab}{e.TreePrint(indent + 1)}");
         }
 

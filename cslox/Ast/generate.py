@@ -198,14 +198,17 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             f.writeln(f"{TAB}public override string TreePrint(int indent)\n{TAB}{{")
             f.writeln(f"{TAB * 2}var sb = new StringBuilder();")
             f.writeln(f"{TAB * 2}sb.Append(new string(' ', indent * 2)).Append(\"{ast.name}\");")
-            non_expressions = [t for t in total_fields or [] if not t[0].startswith("Expression")]
+            # TODO: Factor out hierarchies 
+            non_expressions = [t for t in total_fields or [] if not t[0].startswith("Expression")
+                               and not t[0].startswith("Statement")]
             if len(non_expressions) > 0:
                 non_expressions_as_str = fields_as_parameters(non_expressions,
                                                               name_mangle=lambda x: f"{{{x}}}",
                                                               type_mangle=discard)
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
             f.writeln(f"{TAB * 2}sb.Append(\'\\n\');")
-            other = [t for t in total_fields if t[0].startswith("Expression")]
+            other = [t for t in total_fields if t[0].startswith("Expression") or t[0].startswith("Statement")]
+            # TODO: Handle nullable fields
             for field_type, field_name in other:
                 if not field_type.endswith("[]"):
                     f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
@@ -272,8 +275,8 @@ def main():
                 Ast("Literal", f"object? Value"),
                 Ast("Unary", f"{expression_name} Expression, Token Operator"),
                 Ast("Sequence", f"{expression_name}[] Expressions"),
-                Ast("ReadVariable", "string Name"), 
-                Ast("Assign", f"string Name, {expression_name} Value"), 
+                Ast("ReadVariable", "string Name"),
+                Ast("Assign", f"string Name, {expression_name} Value"),
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),
@@ -295,6 +298,7 @@ def main():
                 Ast("ExpressionStatement", f"{expression_name} Expression"),
                 Ast("Print", f"{expression_name} Expression"),
                 Ast("VarDeclaration", f"string Name, Expression? Initializer"),
+                Ast("Block", f"{statement_name}[] Statements"),
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
