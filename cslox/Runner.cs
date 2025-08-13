@@ -6,8 +6,10 @@ namespace cslox;
 public class Runner
 {
     // Events 
-    public event Action<Token[], IList<Error>>? OnTokenizerFinish; 
-    public event Action<IList<Statement>, IList<Error>>? OnParserFinish; 
+    public event Action<Token[], IList<Error>>? OnTokenizerFinish;
+
+    public event Action<IList<Statement>?, IList<Error>>? OnParserFinish;
+
     // Fields 
     public Interpreter Interpreter;
     public bool Report { get; set; } = false;
@@ -24,6 +26,8 @@ public class Runner
         }
     }
 
+    public bool Dry { get; set; } = false;
+
     public string FilePath { get; init; }
 
     public Runner(string filepath)
@@ -39,15 +43,18 @@ public class Runner
         var lexer = new Lexer(src, FilePath);
         var tokens = lexer.Accumulate();
         // tokens.ForEach(Console.WriteLine);
-        OnTokenizerFinish?.Invoke(tokens, lexer.Errors);; 
+        OnTokenizerFinish?.Invoke(tokens, lexer.Errors);
         errors.AddRangeAndReport(lexer.Errors, Report);
 
         var parser = new Parser(tokens);
         var statements = parser.Parse();
-        if (statements is null) return (errors.ToArray(), []);
-        OnParserFinish?.Invoke(statements, parser.Errors); 
         errors.AddRangeAndReport(parser.Errors, Report);
+        OnParserFinish?.Invoke(statements, parser.Errors);
+        if (statements is null)
+            return (errors.ToArray(), []);
 
+        if (Dry) return (errors.ToArray(), []);
+        // Running 
         List<LoxRuntimeException> runtimeErrors = [];
         try
         {
