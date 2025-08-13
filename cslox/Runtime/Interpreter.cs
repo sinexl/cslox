@@ -40,7 +40,16 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     value = Evaluate(initializer);
                 }
 
-                Context.Define(name, value);
+                try
+                {
+                    Context.Define(name, value);
+                }
+                catch (ArgumentException)
+                {
+                    // TODO: Custom exception for variable redefinition
+                    throw new LoxVariableUndefinedException($"Could not define variable `{name}`.",
+                        statement.Location); 
+                }
                 break;
             }
             case Block(var statements):
