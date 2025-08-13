@@ -7,9 +7,11 @@ using cslox.Ast.Generated;
 namespace cslox;
 
 // TODO: Ternary operator.
+
+// ReSharper disable once GrammarMistakeInComment
 /*
 Syntax:
-        program               → statement* EOF;
+        program               → declaration* EOF;
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement ;
@@ -17,7 +19,9 @@ Syntax:
         printStatement        → "print" expression ";" ;
 
         expression            → sequence ;
-        sequence              → equality ( (  "," ) equality )* ;
+        sequence              → assignment ( (  "," ) assignment )* ;
+        assignment            → IDENTIFIER "=" assignment
+                                | equality ;
         equality              → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison            → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term                  → factor ( ( "-" | "+" ) factor )* ;
@@ -35,6 +39,7 @@ Precedence & Associativity  (from the highest precedence to lowest)
         Term           - +           |  Left
         Comparison     > >= < <=     |  Left
         Equality       == !=         |  Left
+        Assignment     =             |  Right
         Sequence       ,             |  Left
 */
 
@@ -72,30 +77,31 @@ public class Parser
 
     public Statement? ParseDeclaration()
     {
-        var state = SaveState(); 
+        var state = SaveState();
         if (Match(TokenType.Var))
         {
             RestoreState(state);
-            return ParseVariableDeclaration() ?? SyncAndNull<Statement>(); 
+            return ParseVariableDeclaration() ?? SyncAndNull<Statement>();
         }
-        
-        return ParseStatement() ?? SyncAndNull<Statement>(); 
+
+        return ParseStatement() ?? SyncAndNull<Statement>();
     }
 
     private Statement? ParseVariableDeclaration()
     {
-        SourceLocation location = PeekToken().Location; 
-        if (!ExpectAndConsume(TokenType.Var)) return null; 
+        SourceLocation location = PeekToken().Location;
+        if (!ExpectAndConsume(TokenType.Var)) return null;
         if (!ExpectAndConsume(TokenType.Identifier, out var token)) return null;
-        string name = token.Lexeme; 
+        string name = token.Lexeme;
         Expression? initializer = null;
         if (Match(TokenType.Equal))
         {
-            initializer = ParseExpression(); 
-            if (initializer is null) return null; 
+            initializer = ParseExpression();
+            if (initializer is null) return null;
         }
+
         ExpectAndConsume(TokenType.Semicolon);
-        return new VarDeclaration(name, initializer) { Location = location }; 
+        return new VarDeclaration(name, initializer) { Location = location };
     }
 
     public Statement? ParseStatement()
@@ -138,12 +144,12 @@ public class Parser
     {
         SourceLocation loc = PeekToken().Location;
         List<Expression> expressions = new();
-        var item = ParseEquality();
+        var item = ParseAssignment();
         if (item is null) return null;
         expressions.Add(item);
         while (Match(TokenType.Comma))
         {
-            item = ParseEquality();
+            item = ParseAssignment();
             if (item is null) return null;
             expressions.Add(item);
         }
@@ -152,9 +158,26 @@ public class Parser
         return new Sequence(expressions.ToArray()) { Location = loc };
     }
 
+    public Expression? ParseAssignment()
+    {
+        Expression? target = ParseEquality();
+        if (target is null) return null; 
+        if (Match(TokenType.Equal))
+        {
+            Token eq = PeekPrevious();
+            Expression? value = ParseAssignment();
+            if (value is null) return null;
+
+            if (target is ReadVariable(var name))
+                return new Assign(name, value) { Location = eq.Location }; 
+            
+            Error(eq.Location, "Invalid assignment target"); ;
+            return null;
+        }
+        return target; 
+    }
+
     // Todo: Factor out all similar functions into ParseBinop
-
-
     // ==, != 
     public Expression? ParseEquality()
     {
@@ -269,7 +292,7 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
 
-        if (Match(TokenType.Identifier)) return new ReadVariable(PeekPrevious().Lexeme) { Location = loc }; 
+        if (Match(TokenType.Identifier)) return new ReadVariable(PeekPrevious().Lexeme) { Location = loc };
         if (ExpectAndConsume(TokenType.LeftParen))
         {
             SourceLocation parenthesisLoc = PeekPrevious().Location;
@@ -316,17 +339,17 @@ public class Parser
     {
         if (PeekToken().Type == expected)
         {
-            result = PeekToken(); 
+            result = PeekToken();
             SkipToken();
             return true;
         }
 
         Error(expected, PeekToken());
-        result = PeekToken(); 
+        result = PeekToken();
         return false;
     }
-    
-    private bool ExpectAndConsume(TokenType expected) => ExpectAndConsume(expected, out _); 
+
+    private bool ExpectAndConsume(TokenType expected) => ExpectAndConsume(expected, out _);
 
     private void Error(Span<TokenType> expected, Token got, string? message = null)
     {
@@ -351,7 +374,7 @@ public class Parser
 
     private void Error(TokenType expected, Token got, string? message = null) => Error([expected], got, message);
     private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, $"error: {message}"));
-    
+
     private T? SyncAndNull<T>()
     {
         SynchronizeToStatement();
@@ -362,6 +385,7 @@ public class Parser
     // When an error occurs, we treat the current statement as malformed and skip all tokens until the next statement 
     private void SynchronizeToStatement()
     {
+        if (IsEof()) return;
         SkipToken();
         while (!IsEof())
         {
@@ -385,11 +409,15 @@ public class Parser
 
         if (statements is null)
         {
+            foreach (var error in self.Errors)
+            {
+                Console.WriteLine(error);
+            }
             Console.Error.WriteLine("Parse Error occured. Exiting...");
             Environment.Exit(1);
         }
 
-        statements.ForEach(Console.WriteLine); 
+        statements.ForEach(Console.WriteLine);
         // Console.WriteLine(locPrinter.Print(statements));
         // Console.WriteLine(prefixPrinter.Print(statements));
     }

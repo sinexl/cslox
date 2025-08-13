@@ -32,6 +32,8 @@ public class PrefixPrinter : IExpressionVisitor<string>
                     _ => throw new UnreachableException("Not all cases are handled")
                 };
             }
+            case Assign(var name, var expr):
+                return Parenthesise(name, expr);
             case Literal (var value):
             {
                 return value switch
@@ -54,7 +56,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
 
         // This is how you do static assertions in this language. 
         // Welcome to C# 
-        byte staticAssert = Expression.InheritorsAmount == 17 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
         _ = staticAssert;
 
         throw new UnreachableException("Not all cases are handled");

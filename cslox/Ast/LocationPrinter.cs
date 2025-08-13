@@ -34,6 +34,11 @@ public class LocationPrinter : IExpressionVisitor<string>
                     sb[previousIndex - 1] = ' '; // remove the newline 
                     sb.Insert(previousIndex, $"{name}\n");
                     break;
+                case Assign (var name, var e):
+                    sb[previousIndex - 1] = ' '; // remove the newline 
+                    sb.Insert(previousIndex, $"{name}\n");
+                    Impl(e, indent + 1);
+                    break;
                 case Unary(var inner, var op):
                     Impl(inner, indent + 1);
                     break;
@@ -51,7 +56,7 @@ public class LocationPrinter : IExpressionVisitor<string>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 17 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);
