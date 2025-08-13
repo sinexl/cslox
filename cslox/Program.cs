@@ -39,12 +39,13 @@ void Repl()
 {
     bool enableTokenDebugging = false;
     bool enableAstDebugging = false;
+    bool dry = false;
 
     Action<IList<Token>, IList<Error>> debugTokens =
         (tokens, _) => { tokens.ForEach(Console.WriteLine); };
 
-    Action<IList<Statement>, IList<Error>> debugAst =
-        (list, _) => { list.ForEach(Console.WriteLine); };
+    Action<IList<Statement>?, IList<Error>> debugAst =
+        (list, _) => { list?.ForEach(Console.WriteLine); };
 
 
     var runner = new Runner("<REPL>") { AllowRedefinition = true };
@@ -54,11 +55,15 @@ void Repl()
     {
         Console.Write("> ");
         string? line = Console.ReadLine();
-        switch (line)
+        switch (line?.Trim())
         {
             case null:
             case ":quit":
                 exit = true;
+                continue;
+            case ":dry":
+                dry = !dry;
+                runner.Dry = dry;
                 continue;
             case ":clear":
                 Console.Clear();
@@ -75,15 +80,20 @@ void Repl()
                 continue;
         }
 
+
+        // Running
         var (errors, exceptions) = runner.Run(line);
         if (errors.Length > 0)
+        {
+            foreach (var error in errors)
+                Console.WriteLine(error);
             Console.WriteLine($"Found {errors.Length} errors.");
+        }
+
         if (exceptions.Length > 0)
         {
             foreach (var exception in exceptions)
-            {
                 Console.WriteLine(exception.Message);
-            }
 
             Console.WriteLine($"{exceptions.Length} exceptions were thrown.");
         }
