@@ -14,7 +14,8 @@ Syntax:
         program               → declaration* EOF;
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
-        statement             → expressionStatement | printStatement ;
+        statement             → expressionStatement | printStatement | blockStatement ;
+        blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
 
@@ -75,6 +76,7 @@ public class Parser
         return statements.ToArray();
     }
 
+    // Statements
     public Statement? ParseDeclaration()
     {
         var state = SaveState();
@@ -92,6 +94,7 @@ public class Parser
         SourceLocation location = PeekToken().Location;
         if (!ExpectAndConsume(TokenType.Var)) return null;
         if (!ExpectAndConsume(TokenType.Identifier, out var token)) return null;
+        Debug.Assert(token.Type == TokenType.Identifier);
         string name = token.Lexeme;
         Expression? initializer = null;
         if (Match(TokenType.Equal))
@@ -100,7 +103,7 @@ public class Parser
             if (initializer is null) return null;
         }
 
-        ExpectAndConsume(TokenType.Semicolon);
+        if (!ExpectAndConsume(TokenType.Semicolon)) return null;
         return new VarDeclaration(name, initializer) { Location = location };
     }
 
@@ -113,7 +116,35 @@ public class Parser
             return ParsePrintStatement();
         }
 
+        if (Match(TokenType.LeftBrace))
+        {
+            RestoreState(state);
+            return ParseBlockStatement();
+        }
+
         return ParseExpressionStatement();
+    }
+
+    private Statement? ParseBlockStatement()
+    {
+        List<Statement> statements = new();
+        if (!ExpectAndConsume(TokenType.LeftBrace, out var leftBrace)) return null;
+        Debug.Assert(leftBrace.Type == TokenType.LeftBrace);
+        SourceLocation leftBraceLoc = leftBrace.Location;
+
+        while (PeekToken().Type != TokenType.RightBrace && !IsEof())
+        {
+            var statement = ParseDeclaration();
+            if (statement is null) return null;
+            statements.Add(statement);
+        }
+
+        if (!ExpectAndConsume(TokenType.RightBrace)) return null;
+        // if (statements.Count == 0) TODO: Empty statement
+        
+        // With this condition we make { statement; } equal to statement; 
+        if (statements.Count == 1) return statements[0];
+        return new Block(statements.ToArray()) { Location = leftBraceLoc };
     }
 
 
@@ -135,6 +166,7 @@ public class Parser
     }
 
 
+    // Expressions
     public Expression? ParseExpression()
     {
         return ParseSequence();
@@ -161,7 +193,7 @@ public class Parser
     public Expression? ParseAssignment()
     {
         Expression? target = ParseEquality();
-        if (target is null) return null; 
+        if (target is null) return null;
         if (Match(TokenType.Equal))
         {
             Token eq = PeekPrevious();
@@ -169,12 +201,13 @@ public class Parser
             if (value is null) return null;
 
             if (target is ReadVariable(var name))
-                return new Assign(name, value) { Location = eq.Location }; 
-            
-            Error(eq.Location, "Invalid assignment target"); ;
+                return new Assign(name, value) { Location = eq.Location };
+
+            Error(eq.Location, "Invalid assignment target");
             return null;
         }
-        return target; 
+
+        return target;
     }
 
     // Todo: Factor out all similar functions into ParseBinop
@@ -349,6 +382,7 @@ public class Parser
         return false;
     }
 
+    [Pure]
     private bool ExpectAndConsume(TokenType expected) => ExpectAndConsume(expected, out _);
 
     private void Error(Span<TokenType> expected, Token got, string? message = null)
@@ -413,6 +447,7 @@ public class Parser
             {
                 Console.WriteLine(error);
             }
+
             Console.Error.WriteLine("Parse Error occured. Exiting...");
             Environment.Exit(1);
         }
