@@ -104,21 +104,34 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                                 $"{other.GetType().Name}: This should be handled by previous switch case")
                 };
             }
+            case Assign(var name, var expr):
+            {
+                object? value = Evaluate(expr);
+                try
+                {
+                    Context.Assign(name, value);
+                    return value;
+                }
+                catch (ArgumentException)
+                {
+                    throw new LoxVariableUndefinedException($"Could not assign to undefined variable `{name}`.",
+                        expr.Location);
+                }
+            }
             case ReadVariable(var name) e:
             {
                 try
                 {
-                    return Context.Get(name); 
+                    return Context.Get(name);
                 }
                 catch (ArgumentException)
                 {
-                    throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location); 
+                    throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location);
                 }
-                break;
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 17 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
         _ = staticAssert;
         throw new UnreachableException("Not all cases are handled for some reason");
     }

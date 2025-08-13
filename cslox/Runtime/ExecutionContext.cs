@@ -33,4 +33,10 @@ public class ExecutionContext
     {
         Values.Clear();
     }
+
+    public void Assign(string name, object? value)
+    {
+        if (Values.ContainsKey(name)) Values[name] = value;
+        else throw new ArgumentException($"{name} is not defined.");
+    }
 }
