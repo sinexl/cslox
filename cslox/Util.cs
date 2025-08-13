@@ -53,22 +53,20 @@ public static class Extensions
     public static string ArrayTreePrint(this IEnumerable<Expression> array, int indent = 0)
     {
         var sb = new StringBuilder();
-        var tab = new string(' ', indent * 2);
         foreach (var e in array)
         {
-            sb.Append($"{tab}{e.TreePrint(indent + 1)}");
+            sb.Append($"{e.TreePrint(indent)}");
         }
 
         return sb.ToString();
     }
-    
+
     public static string ArrayTreePrint(this IEnumerable<Statement> array, int indent = 0)
     {
         var sb = new StringBuilder();
-        var tab = new string(' ', indent * 2);
         foreach (var e in array)
         {
-            sb.Append($"{tab}{e.TreePrint(indent + 1)}");
+            sb.Append($"{e.TreePrint(indent)}");
         }
 
         return sb.ToString();
