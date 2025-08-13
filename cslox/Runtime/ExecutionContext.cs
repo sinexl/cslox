@@ -4,7 +4,18 @@ namespace cslox.Runtime;
 
 public class ExecutionContext
 {
-    public Dictionary<string, object?> Values { get; init; } = new();
+    public Dictionary<string, object?> Values { get; init; } = new(); 
+    // Parent of the current context. 
+    public ExecutionContext? Enclosing { get; set; }
+    public ExecutionContext(ExecutionContext ctx)
+    {
+        Enclosing = ctx; 
+    }
+
+    public ExecutionContext()
+    {
+        Enclosing = null;
+    }
 
     // Useful for REPLs 
     public bool AllowRedefinition { get; set; } = false;
@@ -26,6 +37,8 @@ public class ExecutionContext
     {
         if (Values.TryGetValue(name, out var value))
             return value;
+        if (Enclosing is not null)
+            return Enclosing.Get(name); 
         throw new ArgumentException($"{name} is not defined.");
     }
 
@@ -36,7 +49,18 @@ public class ExecutionContext
 
     public void Assign(string name, object? value)
     {
-        if (Values.ContainsKey(name)) Values[name] = value;
-        else throw new ArgumentException($"{name} is not defined.");
+        if (Values.ContainsKey(name))
+        {
+            Values[name] = value;
+            return; 
+        }
+
+        if (Enclosing is not null)
+        {
+            Enclosing.Assign(name, value);
+            return;
+        } 
+        
+        throw new ArgumentException($"{name} is not defined.");
     }
 }

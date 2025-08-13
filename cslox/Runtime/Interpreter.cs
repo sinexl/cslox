@@ -5,7 +5,7 @@ namespace cslox.Runtime;
 
 public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
-    public ExecutionContext Context { get; init; }
+    public ExecutionContext Context { get; set; }
 
     public Interpreter()
     {
@@ -43,12 +43,32 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 Context.Define(name, value);
                 break;
             }
+            case Block(var statements):
+            {
+                ExecuteBlock(statements, new ExecutionContext(Context));
+                break;
+            }
             default:
                 throw new UnreachableException("Not all cases are handled");
         }
 
-        byte staticAssert = Statement.InheritorsAmount == 4 ? 0 : -1;
+        byte staticAssert = Statement.InheritorsAmount == 5 ? 0 : -1;
         _ = staticAssert;
+    }
+
+    public void ExecuteBlock(IList<Statement> statements, ExecutionContext ctx)
+    {
+        ExecutionContext previous = Context;
+        try
+        {
+            Context = ctx;
+            foreach (var statement in statements)
+                Execute(statement);
+        }
+        finally
+        {
+            Context = previous; 
+        }
     }
 
     public object? Evaluate<TExpression>(TExpression expression) where TExpression : Expression
