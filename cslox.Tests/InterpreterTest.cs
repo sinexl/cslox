@@ -105,6 +105,29 @@ public class InterpreterTest
         Assert.Equal("10", result);
     }
 
+    [Fact]
+    public static void ReadingFromUnexistingVariable()
+    {
+        string src = "print a;";
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src)); 
+    }
+
+    [Fact]
+    public static void AssigningToVariables()
+    {
+        string src = "var a = 10; a = 11; print a;";
+        var result = RecordInterpreterOutput(src).Trim(); 
+        Assert.Equal("11", result); 
+    }
+
+    [Fact]
+    public static void AssigningToUnexistingVariable()
+    {
+        string src = "a = 10;";
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src)); 
+
+    }
+
     public static string RecordInterpreterOutput(string src)
     {
         using var sw = new StringWriter();
