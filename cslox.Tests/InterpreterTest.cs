@@ -128,6 +128,14 @@ public class InterpreterTest
 
     }
 
+    [Fact]
+    public static void Scoping()
+    {
+        var output = RecordInterpreterOutput(File.ReadAllText("./Interpreter/scoping.cslox"));
+        var expected = File.ReadAllText("./Interpreter/scoping.expected");
+        Assert.Equal(expected, output);
+    }
+
     public static string RecordInterpreterOutput(string src)
     {
         using var sw = new StringWriter();
