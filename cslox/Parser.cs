@@ -23,7 +23,9 @@ Syntax:
         expression            → sequence ;
         sequence              → assignment ( (  "," ) assignment )* ;
         assignment            → IDENTIFIER "=" assignment
-                                | equality ;
+                                | LogicalOr ;
+        LogicalOr             →  logicalAnd ( "or" logicalAnd)* ; 
+        LogicalAnd            →  equality ( "and" equality)* ; 
         equality              → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison            → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term                  → factor ( ( "-" | "+" ) factor )* ;
@@ -41,6 +43,8 @@ Precedence & Associativity  (from the highest precedence to lowest)
         Term           - +           |  Left
         Comparison     > >= < <=     |  Left
         Equality       == !=         |  Left
+        LogicalAnd    and            |  Left 
+        LogicalOr     or             |  Left 
         Assignment     =             |  Right
         Sequence       ,             |  Left
 */
@@ -223,7 +227,7 @@ public class Parser
 
     public Expression? ParseAssignment()
     {
-        Expression? target = ParseEquality();
+        Expression? target = ParseLogicalOr();
         if (target is null) return null;
         if (Match(TokenType.Equal))
         {
@@ -239,6 +243,41 @@ public class Parser
         }
 
         return target;
+    }
+
+    private Expression? ParseLogicalOr()
+    {
+        Expression? left = ParseLogicalAnd();
+        if (left is null) return null;
+
+        while (Match(TokenType.Or))
+        {
+            Token op = PeekPrevious(); 
+            SourceLocation loc = op.Location; 
+            
+            Expression? right = ParseLogicalAnd();
+            if (right is null) return null;
+            left = new LogicalOr(left, right) { Location = loc }; 
+        }
+
+        return left;
+    }
+
+    private Expression? ParseLogicalAnd()
+    {
+        Expression? left = ParseEquality();
+        if (left is null) return null; 
+        while (Match(TokenType.And))
+        {
+            Token op = PeekPrevious();
+            SourceLocation loc = op.Location; 
+            
+            Expression? right = ParseEquality(); 
+            if (right is null) return null; 
+            left = new LogicalAnd(left, right) { Location = loc }; 
+        }
+
+        return left; 
     }
 
     // Todo: Factor out all similar functions into ParseBinop
