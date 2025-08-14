@@ -287,6 +287,8 @@ def main():
                     Ast("Equality", None), Ast("Inequality", None),
                     Ast("Greater", None), Ast("GreaterEqual", None),
                     Ast("Less", None), Ast("LessEqual", None),
+                    # Logical 
+                    Ast("LogicalAnd", None), Ast("LogicalOr", None), 
                 ])
             ])
 

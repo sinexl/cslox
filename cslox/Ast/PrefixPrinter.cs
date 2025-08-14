@@ -29,6 +29,8 @@ public class PrefixPrinter : IExpressionVisitor<string>
                     GreaterEqual => Parenthesise(">=", left, right),
                     Less => Parenthesise("<", left, right),
                     LessEqual => Parenthesise("<=", left, right),
+                    LogicalAnd => Parenthesise("and", left, right), 
+                    LogicalOr => Parenthesise("or", left, right), 
                     _ => throw new UnreachableException("Not all cases are handled")
                 };
             }
@@ -56,7 +58,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
 
         // This is how you do static assertions in this language. 
         // Welcome to C# 
-        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
         _ = staticAssert;
 
         throw new UnreachableException("Not all cases are handled");

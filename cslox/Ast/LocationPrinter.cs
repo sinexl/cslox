@@ -56,7 +56,7 @@ public class LocationPrinter : IExpressionVisitor<string>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);
