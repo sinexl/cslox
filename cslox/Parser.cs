@@ -14,10 +14,11 @@ Syntax:
         program               → declaration* EOF;
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
-        statement             → expressionStatement | printStatement | blockStatement ;
+        statement             → expressionStatement | printStatement | blockStatement | ifStatement ;
         blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
+        ifStatement           → "if" "(" expression ")" statement ( "else" statement )? ;
 
         expression            → sequence ;
         sequence              → assignment ( (  "," ) assignment )* ;
@@ -121,8 +122,38 @@ public class Parser
             RestoreState(state);
             return ParseBlockStatement();
         }
+        
+        if (Match(TokenType.If))
+        {
+            RestoreState(state);
+            return ParseIfStatement(); 
+        }
 
         return ParseExpressionStatement();
+    }
+
+    private Statement? ParseIfStatement()
+    {
+        if (!ExpectAndConsume(TokenType.If, out var ifToken)) return null;
+        Debug.Assert(ifToken.Type == TokenType.If);
+        SourceLocation ifLoc = ifToken.Location; 
+        
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null; 
+        Expression? condition = ParseExpression(); 
+        if (condition is null) return null; 
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;  
+        
+        Statement? thenBranch = ParseStatement();  
+        if (thenBranch is null) return null;   
+        
+        Statement? elseBranch = null; 
+        if (Match(TokenType.Else))
+        {
+            elseBranch = ParseStatement();
+            if (elseBranch is null) return null;
+        } 
+        
+        return new If(condition, thenBranch, elseBranch) { Location = ifLoc }; 
     }
 
     private Statement? ParseBlockStatement()

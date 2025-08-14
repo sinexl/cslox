@@ -1,6 +1,10 @@
-10, 11, 12 + 12; 
+if (10) 
+    print 10; 
+if (5) 
 {
-    a + 10; 
-    a;
+print 5; 
+} 
+else
+{
+  print "else"; 
 }
-{} 
