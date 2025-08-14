@@ -48,8 +48,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 {
                     // TODO: Custom exception for variable redefinition
                     throw new LoxVariableUndefinedException($"Could not define variable `{name}`.",
-                        statement.Location); 
+                        statement.Location);
                 }
+
                 break;
             }
             case Block(var statements):
@@ -61,9 +62,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             {
                 if (Evaluate(condition).ToLoxBool())
                     Execute(thenBranch);
-                else if (elseBranch is not null)  
+                else if (elseBranch is not null)
                     Execute(elseBranch);
-                break; 
+                break;
             }
             default:
                 throw new UnreachableException("Not all cases are handled");
@@ -84,7 +85,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
         }
         finally
         {
-            Context = previous; 
+            Context = previous;
         }
     }
 
@@ -104,7 +105,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     _ => throw new UnreachableException("This should be unreachable")
                 };
             }
-            case Binary(var left, var right) e:
+            case Binary(var left, var right) e when e is not LogicalAnd and not LogicalOr:
             {
                 object? leftValue = Evaluate(left);
                 object? rightValue = Evaluate(right);
@@ -141,6 +142,21 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                                 $"{other.GetType().Name}: This should be handled by previous switch case")
                 };
             }
+            case Binary(var left, var right) e when e is LogicalAnd or LogicalOr:
+            {
+                object? leftValue = Evaluate(left);
+                bool leftBool = leftValue.ToLoxBool();
+                if (e is LogicalOr)
+                {
+                    if (leftBool) return leftValue;
+                }
+                else if (e is LogicalAnd)
+                {
+                    if (!leftBool) return leftValue;
+                }
+
+                return Evaluate(right);
+            }
             case Assign(var name, var expr):
             {
                 object? value = Evaluate(expr);
@@ -168,7 +184,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 18 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
         _ = staticAssert;
         throw new UnreachableException("Not all cases are handled for some reason");
     }
