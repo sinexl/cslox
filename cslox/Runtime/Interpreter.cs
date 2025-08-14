@@ -57,12 +57,20 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 ExecuteBlock(statements, new ExecutionContext(Context));
                 break;
             }
+            case If(var condition, var thenBranch, var elseBranch):
+            {
+                if (Evaluate(condition).ToLoxBool())
+                    Execute(thenBranch);
+                else if (elseBranch is not null)  
+                    Execute(elseBranch);
+                break; 
+            }
             default:
                 throw new UnreachableException("Not all cases are handled");
         }
 
-        // byte staticAssert = Statement.InheritorsAmount == 5 ? 0 : -1;
-        // _ = staticAssert;
+        byte staticAssert = Statement.InheritorsAmount == 6 ? 0 : -1;
+        _ = staticAssert;
     }
 
     public void ExecuteBlock(IList<Statement> statements, ExecutionContext ctx)
