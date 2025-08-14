@@ -17,7 +17,7 @@ public abstract class Statement
     public abstract string TreePrint(int indent);
     // Needed so implementers of Visitor can statically assert whether they handle all possible inheritors.
     // For static_assert in C#, see https://www.lunesu.com/archives/62-Static-assert-in-C!.html
-    public const int InheritorsAmount = 6;
+    public const int InheritorsAmount = 7;
     public SourceLocation Location { get; set; } = new();
 }
 
@@ -118,6 +118,27 @@ public class If(Expression condition, Statement then, Statement? @else) : Statem
         sb.Append(Condition.TreePrint(indent + 1));
         sb.Append(Then.TreePrint(indent + 1));
         sb.Append(Else?.TreePrint(indent + 1));
+        return sb.ToString();
+    }
+}
+
+public class While(Expression condition, Statement body) : Statement
+{
+    public Expression Condition { get; set; } = condition;
+    public Statement Body { get; set; } = body;
+    public new void Deconstruct(out Expression condition, out Statement body) =>
+        (condition, body) = (Condition, Body);
+    public override TResult Accept<TResult>(IStatementVisitor<TResult> visitor) =>
+        visitor.Visit(this);
+
+    public override string ToString() => TreePrint(indent: 0);
+    public override string TreePrint(int indent)
+    {
+        var sb = new StringBuilder();
+        sb.Append(new string(' ', indent * 2)).Append("While");
+        sb.Append('\n');
+        sb.Append(Condition.TreePrint(indent + 1));
+        sb.Append(Body.TreePrint(indent + 1));
         return sb.ToString();
     }
 }

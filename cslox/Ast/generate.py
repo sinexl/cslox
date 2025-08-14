@@ -302,6 +302,7 @@ def main():
                 Ast("VarDeclaration", f"string Name, Expression? Initializer"),
                 Ast("Block", f"{statement_name}[] Statements"),
                 Ast("If", f"{expression_name} Condition, {statement_name} Then, {statement_name}? Else"),
+                Ast("While", f"{expression_name} Condition, {statement_name} Body"), 
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
