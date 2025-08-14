@@ -75,7 +75,7 @@ public class VarDeclaration(string name, Expression? initializer) : Statement
         sb.Append(new string(' ', indent * 2)).Append("VarDeclaration");
         sb.Append($" ({Name})");
         sb.Append('\n');
-        sb.Append(Initializer.TreePrint(indent + 1));
+        sb.Append(Initializer?.TreePrint(indent + 1));
         return sb.ToString();
     }
 }
@@ -117,7 +117,7 @@ public class If(Expression condition, Statement then, Statement? @else) : Statem
         sb.Append('\n');
         sb.Append(Condition.TreePrint(indent + 1));
         sb.Append(Then.TreePrint(indent + 1));
-        sb.Append(Else.TreePrint(indent + 1));
+        sb.Append(Else?.TreePrint(indent + 1));
         return sb.ToString();
     }
 }

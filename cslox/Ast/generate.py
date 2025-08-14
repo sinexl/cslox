@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from ctypes import ArgumentError
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
 from io import TextIOWrapper
 from typing import Callable
 
@@ -207,12 +206,14 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
             f.writeln(f"{TAB * 2}sb.Append(\'\\n\');")
             other = [t for t in total_fields if t[0].startswith("Expression") or t[0].startswith("Statement")]
-            # TODO: Handle nullable fields
             for field_type, field_name in other:
+                nullable = ""
+                if field_type.endswith("?"): nullable = "?"
+                else: nullable = "" 
                 if not field_type.endswith("[]"):
-                    f.writeln(f"{TAB * 2}sb.Append({field_name}.TreePrint(indent + 1));")
+                    f.writeln(f"{TAB * 2}sb.Append({field_name}{nullable}.TreePrint(indent + 1));")
                 else:
-                    f.writeln(f"{TAB * 2}sb.Append({field_name}.ArrayTreePrint(indent + 1));")
+                    f.writeln(f"{TAB * 2}sb.Append({field_name}{nullable}.ArrayTreePrint(indent + 1));")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
 
