@@ -1,4 +1,4 @@
-if (true and false or true) 
+while (10 == 10) 
 {
-
+   print 10; 
 } 

@@ -14,18 +14,19 @@ Syntax:
         program               → declaration* EOF;
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
-        statement             → expressionStatement | printStatement | blockStatement | ifStatement ;
+        statement             → expressionStatement | printStatement | blockStatement | ifStatement | whileStatement;
         blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
         ifStatement           → "if" "(" expression ")" statement ( "else" statement )? ;
+        whileStatement        → "while" "(" expression ")" statement ;
 
         expression            → sequence ;
         sequence              → assignment ( (  "," ) assignment )* ;
         assignment            → IDENTIFIER "=" assignment
                                 | LogicalOr ;
-        LogicalOr             →  logicalAnd ( "or" logicalAnd)* ; 
-        LogicalAnd            →  equality ( "and" equality)* ; 
+        LogicalOr             →  logicalAnd ( "or" logicalAnd)* ;
+        LogicalAnd            →  equality ( "and" equality)* ;
         equality              → comparison ( ( "!=" | "==" ) comparison )* ;
         comparison            → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
         term                  → factor ( ( "-" | "+" ) factor )* ;
@@ -43,8 +44,8 @@ Precedence & Associativity  (from the highest precedence to lowest)
         Term           - +           |  Left
         Comparison     > >= < <=     |  Left
         Equality       == !=         |  Left
-        LogicalAnd    and            |  Left 
-        LogicalOr     or             |  Left 
+        LogicalAnd    and            |  Left
+        LogicalOr     or             |  Left
         Assignment     =             |  Right
         Sequence       ,             |  Left
 */
@@ -115,10 +116,22 @@ public class Parser
     public Statement? ParseStatement()
     {
         var state = SaveState();
+        if (Match(TokenType.If))
+        {
+            RestoreState(state);
+            return ParseIfStatement();
+        }
+
         if (Match(TokenType.Print))
         {
             RestoreState(state);
             return ParsePrintStatement();
+        }
+
+        if (Match(TokenType.While))
+        {
+            RestoreState(state);
+            return ParseWhileStatement();
         }
 
         if (Match(TokenType.LeftBrace))
@@ -126,38 +139,50 @@ public class Parser
             RestoreState(state);
             return ParseBlockStatement();
         }
-        
-        if (Match(TokenType.If))
-        {
-            RestoreState(state);
-            return ParseIfStatement(); 
-        }
+
 
         return ParseExpressionStatement();
+    }
+
+    private Statement? ParseWhileStatement()
+    {
+        if (!ExpectAndConsume(TokenType.While, out Token whileTk)) return null;
+        Debug.Assert(whileTk.Type == TokenType.While);
+        SourceLocation whileLoc = whileTk.Location;
+
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
+        Expression? condition = ParseExpression();
+        if (condition is null) return null;
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;
+
+        Statement? body = ParseStatement();
+        if (body is null) return null;
+
+        return new While(condition, body) { Location = whileLoc };
     }
 
     private Statement? ParseIfStatement()
     {
         if (!ExpectAndConsume(TokenType.If, out var ifToken)) return null;
         Debug.Assert(ifToken.Type == TokenType.If);
-        SourceLocation ifLoc = ifToken.Location; 
-        
-        if (!ExpectAndConsume(TokenType.LeftParen)) return null; 
-        Expression? condition = ParseExpression(); 
-        if (condition is null) return null; 
-        if (!ExpectAndConsume(TokenType.RightParen)) return null;  
-        
-        Statement? thenBranch = ParseStatement();  
-        if (thenBranch is null) return null;   
-        
-        Statement? elseBranch = null; 
+        SourceLocation ifLoc = ifToken.Location;
+
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
+        Expression? condition = ParseExpression();
+        if (condition is null) return null;
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;
+
+        Statement? thenBranch = ParseStatement();
+        if (thenBranch is null) return null;
+
+        Statement? elseBranch = null;
         if (Match(TokenType.Else))
         {
             elseBranch = ParseStatement();
             if (elseBranch is null) return null;
-        } 
-        
-        return new If(condition, thenBranch, elseBranch) { Location = ifLoc }; 
+        }
+
+        return new If(condition, thenBranch, elseBranch) { Location = ifLoc };
     }
 
     private Statement? ParseBlockStatement()
@@ -176,7 +201,7 @@ public class Parser
 
         if (!ExpectAndConsume(TokenType.RightBrace)) return null;
         // if (statements.Count == 0) TODO: Empty statement
-        
+
         // With this condition we make { statement; } equal to statement; 
         if (statements.Count == 1) return statements[0];
         return new Block(statements.ToArray()) { Location = leftBraceLoc };
@@ -252,12 +277,12 @@ public class Parser
 
         while (Match(TokenType.Or))
         {
-            Token op = PeekPrevious(); 
-            SourceLocation loc = op.Location; 
-            
+            Token op = PeekPrevious();
+            SourceLocation loc = op.Location;
+
             Expression? right = ParseLogicalAnd();
             if (right is null) return null;
-            left = new LogicalOr(left, right) { Location = loc }; 
+            left = new LogicalOr(left, right) { Location = loc };
         }
 
         return left;
@@ -266,18 +291,18 @@ public class Parser
     private Expression? ParseLogicalAnd()
     {
         Expression? left = ParseEquality();
-        if (left is null) return null; 
+        if (left is null) return null;
         while (Match(TokenType.And))
         {
             Token op = PeekPrevious();
-            SourceLocation loc = op.Location; 
-            
-            Expression? right = ParseEquality(); 
-            if (right is null) return null; 
-            left = new LogicalAnd(left, right) { Location = loc }; 
+            SourceLocation loc = op.Location;
+
+            Expression? right = ParseEquality();
+            if (right is null) return null;
+            left = new LogicalAnd(left, right) { Location = loc };
         }
 
-        return left; 
+        return left;
     }
 
     // Todo: Factor out all similar functions into ParseBinop
