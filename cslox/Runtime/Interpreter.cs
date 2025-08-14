@@ -66,11 +66,20 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     Execute(elseBranch);
                 break;
             }
+            case While(var condition, var body):
+            {
+                while (Evaluate(condition).ToLoxBool())
+                {
+                    Execute(body);
+                }
+
+                break;
+            }
             default:
                 throw new UnreachableException("Not all cases are handled");
         }
 
-        byte staticAssert = Statement.InheritorsAmount == 6 ? 0 : -1;
+        byte staticAssert = Statement.InheritorsAmount == 7 ? 0 : -1;
         _ = staticAssert;
     }
 
