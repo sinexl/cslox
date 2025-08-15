@@ -81,6 +81,7 @@ public enum TokenType
     True,
     Var,
     While,
+    Break,
 
     Eof
 }
@@ -133,6 +134,7 @@ public static class TokenTypeExtensions
             TokenType.True => "true",
             TokenType.Var => "var",
             TokenType.While => "while",
+            TokenType.Break => "break",
             TokenType.Identifier or TokenType.String or TokenType.Number or TokenType.Eof => null,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
@@ -169,7 +171,7 @@ public static class TokenTypeExtensions
             // Keywords
             TokenType.And or TokenType.Class or TokenType.Else or TokenType.Fun or TokenType.For or TokenType.If or
                 TokenType.Or or TokenType.Print or TokenType.Return or TokenType.Super or TokenType.This
-                or TokenType.Var or
+                or TokenType.Var or TokenType.Break or 
                 TokenType.While => $"`{type.ToString().ToLower()}` keyword",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };

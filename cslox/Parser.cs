@@ -15,12 +15,13 @@ Syntax:
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement | blockStatement | ifStatement
-                                | whileStatement | forStatement;
+                                | whileStatement | forStatement | breakStatement;
         blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
         ifStatement           → "if" "(" expression ")" statement ( "else" statement )? ;
         whileStatement        → "while" "(" expression ")" statement ;
+        breakStatement        → "break" ;
         forStatement          → "for" "(" ( (varDeclaration | exprStatement)? ";" ) // Initializer
                                             expression? ";"                         // Condition
                                             expression? ")"                         // Increment
@@ -121,6 +122,12 @@ public class Parser
     public Statement? ParseStatement()
     {
         var state = SaveState();
+        if (Match(TokenType.Break))
+        {
+            var tk = PeekPrevious();
+            if (!ExpectAndConsume(TokenType.Semicolon)) return null;
+            return new Break { Location = tk.Location }; 
+        }
         if (Match(TokenType.For))
         {
             RestoreState(state);
