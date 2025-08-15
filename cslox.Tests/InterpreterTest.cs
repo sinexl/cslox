@@ -211,6 +211,30 @@ public class InterpreterTest
         Assert.Equal(resultLines, output);
     }
 
+    [Fact]
+    public static void For_Loop_Total()
+    {
+        string src = "for (var i = 0; i < 10; i = i + 1) print i;"; 
+        var output = RecordInterpreterOutput(src).Trim().Split('\n');
+        Assert.Equal([ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ], output); 
+    }
+
+    [Fact]
+    public static void For_Loop_Infinite()
+    {
+        string src = """
+                     var a = 0; 
+                     for(;;) 
+                     {
+                        print a;
+                        if (a == 10) break; 
+                        a = a + 1;
+                     } 
+                     """; 
+        var output = RecordInterpreterOutput(src).Trim().Split('\n'); 
+        Assert.Equal([ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" ], output);  
+    }
+
     public static string RecordInterpreterOutput(string src)
     {
         using var sw = new StringWriter();
