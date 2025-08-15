@@ -168,6 +168,49 @@ public class InterpreterTest
         Assert.Equal(result ? "true" : "false", output);
     }
 
+    [Theory]
+    [InlineData(
+        "var a = 0",
+        "a < 5",
+        "{print a; a = a + 1;}",
+        new[] { "0", "1", "2", "3", "4" }
+    )]
+    [InlineData(
+        "var a = 5",
+        "a > 0",
+        "{print a; a = a - 1;}",
+        new[] { "5", "4", "3", "2", "1" }
+    )]
+    [InlineData(
+        "var a = 1",
+        "a <= 16",
+        "{print a; a = a * 2;}",
+        new[] { "1", "2", "4", "8", "16" }
+    )]
+    [InlineData(
+        "var a = 1",
+        "a < 50",
+        "{print a; a = a + a;}",
+        new[] { "1", "2", "4", "8", "16", "32" }
+    )]
+    [InlineData(
+        "var a = 10",
+        "a > 2",
+        "{print a; a = a / 2;}",
+        new[] { "10", "5", "2.5" }
+    )]
+    public static void While_Loop(string init, string cond, string body, string[] resultLines)
+    {
+        string src = $"""
+                      {init}; 
+                      while ({cond}) 
+                       {body}
+                      """;
+        var output = RecordInterpreterOutput(src).Trim().Split('\n');
+        ;
+        Assert.Equal(resultLines, output);
+    }
+
     public static string RecordInterpreterOutput(string src)
     {
         using var sw = new StringWriter();
