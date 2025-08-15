@@ -277,6 +277,7 @@ def main():
                 Ast("Sequence", f"{expression_name}[] Expressions"),
                 Ast("ReadVariable", "string Name"),
                 Ast("Assign", f"string Name, {expression_name} Value"),
+                Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"), 
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),

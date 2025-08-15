@@ -40,6 +40,8 @@ public class LocationPrinter : IExpressionVisitor<string>
                     Impl(e, indent + 1);
                     break;
                 case Unary(var inner, var op):
+                    sb[previousIndex - 1] = ' '; // remove the newline 
+                    sb.Insert(previousIndex, $"{op.Type.Terminal()}\n");
                     Impl(inner, indent + 1);
                     break;
                 case Sequence(var expressions):
@@ -56,10 +58,19 @@ public class LocationPrinter : IExpressionVisitor<string>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 21 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);
         return sb.ToString();
+    }
+
+    public static void Test()
+    {
+        var tokens = new Lexer("1, 2, 3 + 4", "").Accumulate();
+        var expr = new Parser(tokens).ParseExpression() ?? throw new ArgumentNullException();
+
+        var self = new LocationPrinter();
+        Console.WriteLine(self.Print(expr));
     }
 }

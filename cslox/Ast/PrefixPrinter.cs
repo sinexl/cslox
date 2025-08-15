@@ -53,12 +53,15 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Unary(var inner, var op):
                 return Parenthesise(op.Lexeme, inner);
             case Sequence(var expressions): return Sequence("sequence", expressions);
-            case ReadVariable(var name): return $"{name}.*"; 
+            case ReadVariable(var name): return $"{name}.*";
+
+            case Call(var callee, var arguments):
+                return Parenthesise("call", arguments); 
         }
 
         // This is how you do static assertions in this language. 
         // Welcome to C# 
-        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 21 ? 0 : -1;
         _ = staticAssert;
 
         throw new UnreachableException("Not all cases are handled");
