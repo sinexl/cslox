@@ -47,7 +47,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 catch (ArgumentException)
                 {
                     // TODO: Custom exception for variable redefinition
-                    throw new LoxVariableUndefinedException($"Could not define variable `{name}`.",
+                    throw new LoxVariableUndefinedException($"Variable `{name}` is already defined.",
                         statement.Location);
                 }
 
@@ -192,7 +192,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 }
             }
         }
-
+        // TODO: Evaluate sequence expressions
         byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
         _ = staticAssert;
         throw new UnreachableException("Not all cases are handled for some reason");

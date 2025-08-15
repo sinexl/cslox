@@ -65,7 +65,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
     }
 
     private string Sequence(string name, Expression[] expressions)
-        => $"({Parenthesise(name, expressions)})";
+        => Parenthesise(name, expressions);
 
     private string Parenthesise(string name, params IEnumerable<Expression> expressions)
     {

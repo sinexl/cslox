@@ -78,7 +78,7 @@ public static class Extensions
 
 public record struct SourceLocation()
 {
-    public string File { get; set; }
+    public string File { get; set; } = string.Empty; 
     public int Line { get; set; }
     public int Offset { get; set; }
 

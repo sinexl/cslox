@@ -115,8 +115,6 @@ public class Lexer
             {
                 throw new UnreachableException(
                     $"Whitespaces should be eliminated by {nameof(SkipWhitespacesAndComments)}");
-                // _tokenStart = _tokenStart with { Current = _state.Current + 1 };
-                break;
             }
             case '"':
             {

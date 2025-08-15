@@ -101,7 +101,7 @@ public class InterpreterTest
                      var b = 10; 
                      print b; 
                      """;
-        var result = RecordInterpreterOutput(src).Trim(); 
+        var result = RecordInterpreterOutput(src).Trim();
         Assert.Equal("10", result);
     }
 
@@ -109,23 +109,22 @@ public class InterpreterTest
     public static void ReadingFromUnexistingVariable()
     {
         string src = "print a;";
-        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src)); 
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src));
     }
 
     [Fact]
     public static void AssigningToVariables()
     {
         string src = "var a = 10; a = 11; print a;";
-        var result = RecordInterpreterOutput(src).Trim(); 
-        Assert.Equal("11", result); 
+        var result = RecordInterpreterOutput(src).Trim();
+        Assert.Equal("11", result);
     }
 
     [Fact]
     public static void AssigningToUnexistingVariable()
     {
         string src = "a = 10;";
-        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src)); 
-
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements(src));
     }
 
     [Fact]
@@ -134,6 +133,39 @@ public class InterpreterTest
         var output = RecordInterpreterOutput(File.ReadAllText("./Interpreter/scoping.cslox"));
         var expected = File.ReadAllText("./Interpreter/scoping.expected");
         Assert.Equal(expected, output);
+    }
+
+    [Fact]
+    public static void VariableRedefinition()
+    {
+        Assert.Throws<LoxVariableUndefinedException>(() => InterpretStatements("var a = 10; var a = 11;"));
+    }
+
+    [Theory]
+    [InlineData("true", true)]
+    [InlineData("10 > 15", false)]
+    [InlineData("10 < 15", true)]
+    [InlineData("true and false or true", true)] // ((true and false) or true)
+    [InlineData("true or false and false", true)] // (true or (false and false))
+    [InlineData("false or false and true", false)] // (false or (false and true))
+    [InlineData("false and true or true", true)] // ((false and true) or true)
+    [InlineData("10 < 5 or 5 < 10 and 2 != 3", true)] // ((10 < 5) or ((5 < 10) and (2 != 3)))
+    [InlineData("10 > 5 and 5 > 10 or 1 == 1", true)] // (((10 > 5) and (5 > 10)) or (1 == 1))
+    [InlineData("10 > 5 or 5 > 10 and 1 != 1", true)] // ((10 > 5) or ((5 > 10) and (1 != 1)))
+    [InlineData("10 < 5 and 5 < 10 or 2 == 3", false)] // (((10 < 5) and (5 < 10)) or (2 == 3))
+    [InlineData("1 == 1 and 2 == 2 or 3 == 4", true)] // (((1 == 1) and (2 == 2)) or (3 == 4))
+    [InlineData("1 != 1 and 2 == 2 or 3 == 3", true)] // (((1 != 1) and (2 == 2)) or (3 == 3))
+    [InlineData("1 == 1 or 2 == 2 and 3 == 4", true)] // ((1 == 1) or ((2 == 2) and (3 == 4)))
+    [InlineData("1 == 2 or 2 == 2 and 3 == 3", true)] // ((1 == 2) or ((2 == 2) and (3 == 3)))
+    public static void If_Statement(string condition, bool result)
+    {
+        string src = $"""
+                      if ({condition})  
+                        print "true"; 
+                      else print "false"; 
+                      """;
+        var output = RecordInterpreterOutput(src).Trim();
+        Assert.Equal(result ? "true" : "false", output);
     }
 
     public static string RecordInterpreterOutput(string src)
@@ -149,7 +181,8 @@ public class InterpreterTest
         {
             Console.SetOut(original);
         }
-        return sw.ToString(); 
+
+        return sw.ToString();
     }
 
     private static void InterpretStatements(string src)
