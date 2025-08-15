@@ -28,7 +28,7 @@ Syntax:
                                             statement ;
 
         expression            → sequence ;
-        sequence              → assignment ( (  "," ) assignment )* ;
+        sequence              → assignment ( "," assignment )* ;
         assignment            → IDENTIFIER "=" assignment
                                 | LogicalOr ;
         LogicalOr             →  logicalAnd ( "or" logicalAnd)* ;
@@ -38,13 +38,16 @@ Syntax:
         term                  → factor ( ( "-" | "+" ) factor )* ;
         factor                → unary ( ( "/" | "*" ) unary )* ;
         unary                 → ( "!" | "-" ) unary
-                              | primary ;
+                                | call ;
+        call                  → primary ( "(" arguments ? ")" )* ;
+        arguments             → expression ( "," expression )* ;
         primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER
                               | "(" expression ")" ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
         Name          Operators      Associates
         ------------------------------------
+        Call           ()            |  Left
         Unary          ! -           |  Right
         Factor         / *           |  Left
         Term           - +           |  Left
@@ -126,8 +129,9 @@ public class Parser
         {
             var tk = PeekPrevious();
             if (!ExpectAndConsume(TokenType.Semicolon)) return null;
-            return new Break { Location = tk.Location }; 
+            return new Break { Location = tk.Location };
         }
+
         if (Match(TokenType.For))
         {
             RestoreState(state);
@@ -172,7 +176,7 @@ public class Parser
 
         // Initializer. 
         Statement? initializer;
-        var afterRightParen = SaveState(); 
+        var afterRightParen = SaveState();
         if (Match(TokenType.Semicolon)) initializer = null;
         else if (Match(TokenType.Var))
         {
@@ -218,14 +222,15 @@ public class Parser
                 ]
             ) { Location = bodyLoc };
         }
-        condition = condition ?? new Literal(true) { Location = condSemicolon.Location }; 
+
+        condition = condition ?? new Literal(true) { Location = condSemicolon.Location };
         Statement whileLoop = new While(condition, body) { Location = forLoc };
         if (initializer is not null)
         {
-            whileLoop = new Block([initializer, whileLoop]) { Location = forLoc }; 
+            whileLoop = new Block([initializer, whileLoop]) { Location = forLoc };
         }
 
-        return whileLoop; 
+        return whileLoop;
     }
 
     private Statement? ParseWhileStatement()
@@ -490,7 +495,48 @@ public class Parser
             return new Unary(inner, op) { Location = op.Location };
         }
 
-        return ParsePrimary();
+        return ParseCall();
+    }
+
+    private Expression? ParseCall()
+    {
+        Expression? left = ParsePrimary();
+        if (left is null) return null;
+
+        while (Match(TokenType.LeftParen))
+        {
+            left = ParseArguments(left ?? throw new InvalidOperationException());
+        }
+
+        return left;
+    }
+
+    private Call? ParseArguments(Expression callee)
+    {
+        List<Expression> arguments = [];
+        if (PeekToken().Type != TokenType.RightParen)
+        {
+            var expr = ParseExpression();
+            switch (expr)
+            {
+                case null:
+                    return null;
+                // @DFOI, HACK: We already have an AST Node `Sequence` which represents the sequence of expressions
+                // that are comma separated in our syntax. 
+                // But it has a semantical difference, since it is supposed to evaluate its first item and discard others
+                case Sequence(var elements):
+                    arguments.AddRange(elements);
+                    break;
+                default:
+                    arguments.Add(expr);
+                    break;
+            }
+        }
+
+        if (!ExpectAndConsume(TokenType.RightParen, out Token rightParen)) return null;
+        Debug.Assert(rightParen.Type == TokenType.RightParen);
+
+        return new Call(callee, arguments.ToArray()) { Location = rightParen.Location };
     }
 
     // number, string, nil, true, false
