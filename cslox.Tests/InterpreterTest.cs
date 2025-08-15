@@ -214,9 +214,9 @@ public class InterpreterTest
     [Fact]
     public static void For_Loop_Total()
     {
-        string src = "for (var i = 0; i < 10; i = i + 1) print i;"; 
+        string src = "for (var i = 0; i < 10; i = i + 1) print i;";
         var output = RecordInterpreterOutput(src).Trim().Split('\n');
-        Assert.Equal([ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ], output); 
+        Assert.Equal(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], output);
     }
 
     [Fact]
@@ -230,10 +230,37 @@ public class InterpreterTest
                         if (a == 10) break; 
                         a = a + 1;
                      } 
-                     """; 
-        var output = RecordInterpreterOutput(src).Trim().Split('\n'); 
-        Assert.Equal([ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" ], output);  
+                     """;
+        var output = RecordInterpreterOutput(src).Trim().Split('\n');
+        Assert.Equal(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"], output);
     }
+
+    [Fact]
+    public static void Break_Statement_TopLevel() =>
+        Assert.Throws<LoxBreakException>(() => InterpretStatements("break;"));
+
+    [Fact]
+    public static void Break_Statement_InsideLoop()
+    {
+        var src = """
+                  for(var i = 0; ;i = i + 1) 
+                  {
+                    if (i == 10) break;  
+                    print i; 
+                  }
+                  """;
+        var output = RecordInterpreterOutput(src).Trim().Split('\n');
+        Assert.Equal(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"], output);
+    }
+
+    [Fact]
+    public static void Break_Statement_Nested()
+    {
+        var src = File.ReadAllText("./Interpreter/nested_break.cslox");
+        var output = RecordInterpreterOutput(src);
+        Assert.DoesNotContain("This should never be printed", output);;
+    }
+
 
     public static string RecordInterpreterOutput(string src)
     {

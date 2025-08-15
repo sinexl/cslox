@@ -145,6 +145,7 @@ public class Lexer
 
     private void SkipWhitespacesAndComments()
     {
+        // TODO: Comments are broken. 
         while (true)
         {
             if (char.IsWhiteSpace(PeekChar()))

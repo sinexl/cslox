@@ -34,6 +34,9 @@
         <None Update="Interpreter\scoping.expected">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+        <None Update="Interpreter\nested_break.cslox">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>
