@@ -70,17 +70,22 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             {
                 while (Evaluate(condition).ToLoxBool())
                 {
-                    Execute(body);
+                    try
+                    {
+                        Execute(body);
+                    }
+                    catch (LoxBreakException)
+                    {
+                        break;
+                    }
                 }
 
                 break;
             }
+            case Break @break: throw new LoxBreakException("Break should be only used inside loops.", @break.Location);
             default:
                 throw new UnreachableException("Not all cases are handled");
         }
-
-        byte staticAssert = Statement.InheritorsAmount == 7 ? 0 : -1;
-        _ = staticAssert;
     }
 
     public void ExecuteBlock(IList<Statement> statements, ExecutionContext ctx)
@@ -192,6 +197,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 }
             }
         }
+
         // TODO: Evaluate sequence expressions
         byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
         _ = staticAssert;

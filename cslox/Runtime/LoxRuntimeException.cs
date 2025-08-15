@@ -60,5 +60,12 @@ public class LoxVariableUndefinedException : LoxRuntimeException
 {
     public LoxVariableUndefinedException(string message, SourceLocation location) : base(message, location)
     {
-    } 
+    }
+}
+
+public class LoxBreakException : LoxRuntimeException
+{
+    public LoxBreakException(string msg, SourceLocation location) : base(msg, location) 
+    {
+    }
 }
