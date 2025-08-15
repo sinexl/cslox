@@ -14,12 +14,17 @@ Syntax:
         program               → declaration* EOF;
         declaration           → varDeclaration | statement
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
-        statement             → expressionStatement | printStatement | blockStatement | ifStatement | whileStatement;
+        statement             → expressionStatement | printStatement | blockStatement | ifStatement
+                                | whileStatement | forStatement;
         blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
         ifStatement           → "if" "(" expression ")" statement ( "else" statement )? ;
         whileStatement        → "while" "(" expression ")" statement ;
+        forStatement          → "for" "(" ( (varDeclaration | exprStatement)? ";" ) // Initializer
+                                            expression? ";"                         // Condition
+                                            expression? ")"                         // Increment
+                                            statement ;
 
         expression            → sequence ;
         sequence              → assignment ( (  "," ) assignment )* ;
@@ -116,6 +121,12 @@ public class Parser
     public Statement? ParseStatement()
     {
         var state = SaveState();
+        if (Match(TokenType.For))
+        {
+            RestoreState(state);
+            return ParseForStatement();
+        }
+
         if (Match(TokenType.If))
         {
             RestoreState(state);
@@ -142,6 +153,72 @@ public class Parser
 
 
         return ParseExpressionStatement();
+    }
+
+    private Statement? ParseForStatement()
+    {
+        if (!ExpectAndConsume(TokenType.For, out Token forTk)) return null;
+        Debug.Assert(forTk.Type == TokenType.For);
+        SourceLocation forLoc = forTk.Location;
+
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
+
+        // Initializer. 
+        Statement? initializer;
+        var afterRightParen = SaveState(); 
+        if (Match(TokenType.Semicolon)) initializer = null;
+        else if (Match(TokenType.Var))
+        {
+            RestoreState(afterRightParen);
+            initializer = ParseVariableDeclaration();
+            if (initializer is null) return null;
+        }
+        else
+        {
+            initializer = ParseExpressionStatement();
+            if (initializer is null) return null;
+        }
+
+        // Condition 
+        Expression? condition = null;
+        if (PeekToken().Type != TokenType.Semicolon)
+        {
+            condition = ParseExpression();
+            if (condition is null) return null;
+        }
+
+        if (!ExpectAndConsume(TokenType.Semicolon, out var condSemicolon)) return null;
+
+        // Increment 
+        Expression? increment = null;
+        if (PeekToken().Type != TokenType.RightParen)
+        {
+            increment = ParseExpression();
+        }
+
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;
+
+        // Body
+        Statement? body = ParseStatement();
+        if (body is null) return null;
+
+        var bodyLoc = body.Location;
+        if (increment is not null)
+        {
+            body = new Block([
+                    body,
+                    new ExpressionStatement(increment) { Location = increment.Location }
+                ]
+            ) { Location = bodyLoc };
+        }
+        condition = condition ?? new Literal(true) { Location = condSemicolon.Location }; 
+        Statement whileLoop = new While(condition, body) { Location = forLoc };
+        if (initializer is not null)
+        {
+            whileLoop = new Block([initializer, whileLoop]) { Location = forLoc }; 
+        }
+
+        return whileLoop; 
     }
 
     private Statement? ParseWhileStatement()
