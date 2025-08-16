@@ -517,20 +517,20 @@ public class Parser
         if (PeekToken().Type != TokenType.RightParen)
         {
             var expr = ParseExpression();
-            switch (expr)
+            if (expr == null) return null;
+            // @DFOI, HACK: We already have an AST Node `Sequence` which represents the sequence of expressions
+            // that are comma separated in our syntax. 
+            // But it has a semantical difference, since it is supposed to evaluate its first item and discard others
+            if (expr is Sequence(var elements))
             {
-                case null:
-                    return null;
-                // @DFOI, HACK: We already have an AST Node `Sequence` which represents the sequence of expressions
-                // that are comma separated in our syntax. 
-                // But it has a semantical difference, since it is supposed to evaluate its first item and discard others
-                case Sequence(var elements):
-                    arguments.AddRange(elements);
-                    break;
-                default:
-                    arguments.Add(expr);
-                    break;
+                if (elements.Length >= 255)
+                    // We do not return null in this scenario, since parser is in valid state. 
+                    Error(PeekToken().Location, "Can't have more than 255 arguments.");
+
+                arguments.AddRange(elements);
             }
+            else
+                arguments.Add(expr);
         }
 
         if (!ExpectAndConsume(TokenType.RightParen, out Token rightParen)) return null;
