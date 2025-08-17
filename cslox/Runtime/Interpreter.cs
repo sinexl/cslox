@@ -31,10 +31,10 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
         {
             case ExpressionStatement(var expression):
                 Evaluate(expression);
-                break;
+                return;
             case Print(var expression):
                 Console.WriteLine(Evaluate(expression).LoxPrint());
-                break;
+                return;
             case VarDeclaration(var name, var initializer):
             {
                 object? value = null;
@@ -54,12 +54,12 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                         statement.Location);
                 }
 
-                break;
+                return;
             }
             case Block(var statements):
             {
                 ExecuteBlock(statements, new ExecutionContext(Context));
-                break;
+                return;
             }
             case If(var condition, var thenBranch, var elseBranch):
             {
@@ -67,7 +67,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     Execute(thenBranch);
                 else if (elseBranch is not null)
                     Execute(elseBranch);
-                break;
+                return;
             }
             case While(var condition, var body):
             {
@@ -83,15 +83,23 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     }
                 }
 
-                break;
+                return;
             }
-            case Break @break: throw new LoxBreakException("Break should be only used inside loops.", @break.Location);
-            default:
-                throw new UnreachableException("Not all cases are handled");
-            
-            byte staticAssert = Statement.InheritorsAmount == 8 ? 0 : -1;
-            _ = staticAssert;
+            case Break @break:
+            {
+                throw new LoxBreakException("Break should be only used inside loops.", @break.Location);
+            }
+            case Function(var name, var parameters, var body) s:
+            {
+                LoxFunction function = new LoxFunction(s);
+                Context.Define(name, function);
+                return;
+            }
         }
+
+        byte staticAssert = Statement.InheritorsAmount == 9 ? 0 : -1;
+        _ = staticAssert;
+        throw new UnreachableException("Not all cases are handled");
     }
 
     public void ExecuteBlock(IList<Statement> statements, ExecutionContext ctx)
