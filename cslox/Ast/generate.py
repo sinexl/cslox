@@ -308,6 +308,7 @@ def main():
                 Ast("While", f"{expression_name} Condition, {statement_name} Body"),
                 Ast("Function", f"string Name, Token[] Params, Statement[] Body"),
                 Ast("Break", None),
+                Ast("Return", f"{expression_name} Value"), 
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
