@@ -16,7 +16,7 @@ Syntax:
         declaration           → varDeclaration | statement | functionDeclaration
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement | blockStatement | ifStatement
-                                | whileStatement | forStatement | breakStatement;
+                                | whileStatement | forStatement | breakStatement | returnStatement;
         blockStatement        → "{" declaration* "}" ;
         expressionStatement   → expression ";" ;
         printStatement        → "print" expression ";" ;
@@ -30,6 +30,8 @@ Syntax:
         functionDeclaration   → "fun" function ;
         function              → IDENTIFIER "(" parameters? ")" block
         parameters            → IDENTIFIER ( "," IDENTIFIER )* ;
+        returnStatement       → "return" expression? ";" ;
+
 
         expression            → sequence ;
         sequence              → assignment ( "," assignment )* ;
@@ -134,7 +136,7 @@ public class Parser
             if (expr is null) return null;
             if (expr is Sequence(var elements))
             {
-                parameters.Capacity = elements.Length; 
+                parameters.Capacity = elements.Length;
                 foreach (var element in elements)
                 {
                     if (element is not ReadVariable(var name) v)
@@ -148,10 +150,10 @@ public class Parser
                 ReportError(expr.Location);
         }
 
-        if (!ExpectAndConsume(TokenType.RightParen)) return null; 
-        var statements = ParseBlock(); 
+        if (!ExpectAndConsume(TokenType.RightParen)) return null;
+        var statements = ParseBlock();
         if (statements is null) return null;
-        return new Function(functionName.Lexeme, parameters.ToArray(), statements) { Location = loc }; 
+        return new Function(functionName.Lexeme, parameters.ToArray(), statements) { Location = loc };
     }
 
     private Statement? ParseVariableDeclaration()
@@ -200,6 +202,12 @@ public class Parser
             return ParsePrintStatement();
         }
 
+        if (Match(TokenType.Return))
+        {
+            RestoreState(state);
+            return ParseReturnStatement();
+        }
+
         if (Match(TokenType.While))
         {
             RestoreState(state);
@@ -214,6 +222,22 @@ public class Parser
 
 
         return ParseExpressionStatement();
+    }
+
+    private Statement? ParseReturnStatement()
+    {
+        if (!ExpectAndConsume(TokenType.Return, out var returnTk)) return null;
+        Debug.Assert(returnTk.Type == TokenType.Return);
+
+        Expression? value = null; 
+        if (PeekToken().Type != TokenType.Semicolon)
+        {
+            value = ParseExpression();
+            if (value is null) return null;
+        }
+
+        if (!ExpectAndConsume(TokenType.Semicolon)) return null;
+        return new Return(value ?? CreateLiteral(null)) { Location = returnTk.Location };
     }
 
     private Statement? ParseForStatement()
@@ -349,9 +373,9 @@ public class Parser
     private Statement[]? ParseBlock()
     {
         Statement? statement = ParseBlockStatement();
-        if (statement is null) return null; 
+        if (statement is null) return null;
         if (statement is Block(var statements)) return statements;
-        return [statement]; 
+        return [statement];
     }
 
 

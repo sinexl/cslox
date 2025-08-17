@@ -1,5 +1,6 @@
-fun c(a, b + 11, c, d) 
+fun c(a, b, c, d) 
 {
   print c;
-  
+  return 10, 11, 12;  
 }
+return; 
