@@ -5,11 +5,14 @@ namespace cslox.Runtime;
 
 public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
+    public ExecutionContext Globals { get; init; }
     public ExecutionContext Context { get; set; }
 
     public Interpreter()
     {
-        Context = new();
+        Globals = new();
+        Context = Globals;
+        Globals.Define("clock", new DotnetFunction(0, () => DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0));
     }
 
     object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression)
@@ -85,6 +88,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case Break @break: throw new LoxBreakException("Break should be only used inside loops.", @break.Location);
             default:
                 throw new UnreachableException("Not all cases are handled");
+            
+            byte staticAssert = Statement.InheritorsAmount == 8 ? 0 : -1;
+            _ = staticAssert;
         }
     }
 
@@ -185,6 +191,21 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                         expr.Location);
                 }
             }
+            case Call(var calleeExpr, var argumentsExpr):
+            {
+                object? callee = Evaluate(calleeExpr);
+
+                var arguments = argumentsExpr.Select(Evaluate).ToArray();
+                var loc = calleeExpr.Location;
+                if (callee is null) throw new LoxCastException("Could not call null.", loc, calleeExpr);
+                if (callee is not ILoxCallable c)
+                    throw new LoxCastException("Could not call non-callable.", loc, calleeExpr);
+                if (arguments.Length != c.Arity)
+                    throw new LoxRuntimeException($"Expected {c.Arity} arguments, but got {arguments.Length}.",
+                        loc);
+
+                return c.Call(this, arguments);
+            }
             case ReadVariable(var name) e:
             {
                 try
@@ -198,9 +219,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        // TODO: Evaluate sequence expressions
-        byte staticAssert = Expression.InheritorsAmount == 20 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 21 ? 0 : -1;
         _ = staticAssert;
+        // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");
     }
 }
