@@ -39,8 +39,16 @@ public class LoxFunction : ILoxCallable
         {
             context.Define(Declaration.Params[i].Lexeme, arguments[i]);
         }
-        interpreter.ExecuteBlock(Declaration.Body, context);
-        return null; // todo: return. 
+
+        try
+        {
+            interpreter.ExecuteBlock(Declaration.Body, context);
+        }
+        catch (LoxReturnException e)
+        {
+            return e.Value; 
+        }
+        return null; 
     }
 
     public Function Declaration { get; init; }

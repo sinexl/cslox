@@ -69,3 +69,14 @@ public class LoxBreakException : LoxRuntimeException
     {
     }
 }
+
+// if this exception wasn't caught, `return` was used not in function; 
+public class LoxReturnException : LoxRuntimeException
+{
+    public LoxReturnException(object? value, string message, SourceLocation location) : base(message, location)
+    {
+        Value = value;
+    }
+
+    public object? Value { get; init; } 
+}
