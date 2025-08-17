@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
+using System.Net.Security;
 using System.Text;
 using cslox.Ast;
 using cslox.Ast.Generated;
@@ -12,7 +13,7 @@ namespace cslox;
 /*
 Syntax:
         program               → declaration* EOF;
-        declaration           → varDeclaration | statement
+        declaration           → varDeclaration | statement | functionDeclaration
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement | blockStatement | ifStatement
                                 | whileStatement | forStatement | breakStatement;
@@ -26,6 +27,9 @@ Syntax:
                                             expression? ";"                         // Condition
                                             expression? ")"                         // Increment
                                             statement ;
+        functionDeclaration   → "fun" function ;
+        function              → IDENTIFIER "(" parameters? ")" block
+        parameters            → IDENTIFIER ( "," IDENTIFIER )* ;
 
         expression            → sequence ;
         sequence              → assignment ( "," assignment )* ;
@@ -95,6 +99,12 @@ public class Parser
     public Statement? ParseDeclaration()
     {
         var state = SaveState();
+        if (Match(TokenType.Fun))
+        {
+            RestoreState(state);
+            return ParseFunctionDeclaration() ?? SyncAndNull<Statement>();
+        }
+
         if (Match(TokenType.Var))
         {
             RestoreState(state);
@@ -102,6 +112,46 @@ public class Parser
         }
 
         return ParseStatement() ?? SyncAndNull<Statement>();
+    }
+
+    private Statement? ParseFunctionDeclaration()
+    {
+        if (!ExpectAndConsume(TokenType.Fun, out Token funTk)) return null;
+        Debug.Assert(funTk.Type == TokenType.Fun);
+        var loc = funTk.Location;
+        if (!ExpectAndConsume(TokenType.Identifier, out var functionName)) return null;
+
+        if (!ExpectAndConsume(TokenType.LeftParen)) return null;
+
+        List<Token> parameters = new();
+
+        void ReportError(SourceLocation errLoc) => Error(errLoc,
+            "Expected comma separated list of arguments in the function declaration ");
+
+        if (PeekToken().Type != TokenType.RightParen)
+        {
+            var expr = ParseExpression();
+            if (expr is null) return null;
+            if (expr is Sequence(var elements))
+            {
+                parameters.Capacity = elements.Length; 
+                foreach (var element in elements)
+                {
+                    if (element is not ReadVariable(var name) v)
+                        ReportError(element.Location);
+                    else parameters.Add(new Token(TokenType.Identifier, name, name, v.Location));
+                }
+            }
+            else if (expr is ReadVariable(var name) v)
+                parameters.Add(new Token(TokenType.Identifier, name, name, v.Location));
+            else
+                ReportError(expr.Location);
+        }
+
+        if (!ExpectAndConsume(TokenType.RightParen)) return null; 
+        var statements = ParseBlock(); 
+        if (statements is null) return null;
+        return new Function(functionName.Lexeme, parameters.ToArray(), statements) { Location = loc }; 
     }
 
     private Statement? ParseVariableDeclaration()
@@ -294,6 +344,14 @@ public class Parser
         // With this condition we make { statement; } equal to statement; 
         if (statements.Count == 1) return statements[0];
         return new Block(statements.ToArray()) { Location = leftBraceLoc };
+    }
+
+    private Statement[]? ParseBlock()
+    {
+        Statement? statement = ParseBlockStatement();
+        if (statement is null) return null; 
+        if (statement is Block(var statements)) return statements;
+        return [statement]; 
     }
 
 
@@ -666,7 +724,7 @@ public class Parser
         Console.WriteLine("\n");
         var statements = self.Parse();
 
-        if (statements is null)
+        if (statements is null || self.Errors.Any())
         {
             foreach (var error in self.Errors)
             {
