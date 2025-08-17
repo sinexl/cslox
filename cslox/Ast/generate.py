@@ -208,8 +208,10 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             other = [t for t in total_fields if t[0].startswith("Expression") or t[0].startswith("Statement")]
             for field_type, field_name in other:
                 nullable = ""
-                if field_type.endswith("?"): nullable = "?"
-                else: nullable = "" 
+                if field_type.endswith("?"):
+                    nullable = "?"
+                else:
+                    nullable = ""
                 if not field_type.endswith("[]"):
                     f.writeln(f"{TAB * 2}sb.Append({field_name}{nullable}.TreePrint(indent + 1));")
                 else:
@@ -256,7 +258,7 @@ def fields_as_parameters(fields: list[tuple] | None,
 def type_to_csharp_name(t: str) -> str:
     t = t.lower()
     result = ""
-    if t in ["operator", "if", "switch", "else"]:
+    if t in ["operator", "if", "switch", "else", "params"]:
         result += "@"
     return result + t
 
@@ -277,7 +279,7 @@ def main():
                 Ast("Sequence", f"{expression_name}[] Expressions"),
                 Ast("ReadVariable", "string Name"),
                 Ast("Assign", f"string Name, {expression_name} Value"),
-                Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"), 
+                Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"),
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),
@@ -289,7 +291,7 @@ def main():
                     Ast("Greater", None), Ast("GreaterEqual", None),
                     Ast("Less", None), Ast("LessEqual", None),
                     # Logical 
-                    Ast("LogicalAnd", None), Ast("LogicalOr", None), 
+                    Ast("LogicalAnd", None), Ast("LogicalOr", None),
                 ])
             ])
 
@@ -303,8 +305,9 @@ def main():
                 Ast("VarDeclaration", f"string Name, Expression? Initializer"),
                 Ast("Block", f"{statement_name}[] Statements"),
                 Ast("If", f"{expression_name} Condition, {statement_name} Then, {statement_name}? Else"),
-                Ast("While", f"{expression_name} Condition, {statement_name} Body"), 
-                Ast("Break", None), 
+                Ast("While", f"{expression_name} Condition, {statement_name} Body"),
+                Ast("Function", f"string Name, Token[] Params, Statement[] Body"),
+                Ast("Break", None),
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")
