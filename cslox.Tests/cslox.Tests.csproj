@@ -31,10 +31,16 @@
         <None Update="Interpreter\scoping.cslox">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Interpreter\scoping.expected">
+        <None Update="Interpreter\scoping.expected.txt">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Interpreter\nested_break.cslox">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Interpreter\closures.cslox">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Interpreter\closures.expected.txt">
           <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

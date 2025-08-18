@@ -52,7 +52,7 @@ public class InterpreterTest
     {
         var result = InterpretExpr("0.1 + 0.2");
         Assert.IsType<double>(result);
-        Assert.True(Math.Abs((double)result! - 0.3) < 1e-9, "Precision should be within epsilon");
+        Assert.True(Math.Abs((double)result - 0.3) < 1e-9, "Precision should be within epsilon");
     }
 
     [Theory]
@@ -131,7 +131,7 @@ public class InterpreterTest
     public static void Scoping()
     {
         var output = RecordInterpreterOutput(File.ReadAllText("./Interpreter/scoping.cslox"));
-        var expected = File.ReadAllText("./Interpreter/scoping.expected");
+        var expected = File.ReadAllText("./Interpreter/scoping.expected.txt");
         Assert.Equal(expected, output);
     }
 
@@ -207,7 +207,6 @@ public class InterpreterTest
                        {body}
                       """;
         var output = RecordInterpreterOutput(src).Trim().Split('\n');
-        ;
         Assert.Equal(resultLines, output);
     }
 
@@ -256,13 +255,44 @@ public class InterpreterTest
     [Fact]
     public static void Break_Statement_Nested()
     {
-        var src = File.ReadAllText("./Interpreter/nested_break.cslox");
-        var output = RecordInterpreterOutput(src);
-        Assert.DoesNotContain("This should never be printed", output);;
+        var path = "./Interpreter/nested_break.cslox";
+        var output = InterpretFileAndRecordOutput(path);
+        Assert.DoesNotContain("This should never be printed", output);
+    }
+
+    [Fact]
+    public static void Closures()
+    {
+        var path = "./Interpreter/closures.cslox";
+        var output = InterpretFileAndRecordOutput(path);
+        var expected = File.ReadAllText("./Interpreter/closures.expected.txt");
+        Assert.Equal(expected, output);
+    }
+
+    [Fact]
+    public static void Lambda()
+    {
+        var src =
+            """
+            var counter = 0; 
+            var five = fun (f) {
+                for(var i = 0; i < 5; i = i + 1) f(i);
+            }; 
+            five (fun (x) { counter = counter + x; });  
+            print counter; 
+            """;
+        var output = RecordInterpreterOutput(src).Trim();
+        Assert.Equal("10", output); 
     }
 
 
-    public static string RecordInterpreterOutput(string src)
+    private static string InterpretFileAndRecordOutput(string filepath)
+    {
+        var src = File.ReadAllText(filepath);
+        return RecordInterpreterOutput(src);
+    }
+
+    private static string RecordInterpreterOutput(string src)
     {
         using var sw = new StringWriter();
         var original = Console.Out;

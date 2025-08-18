@@ -1,15 +1,9 @@
-fun triple(f) 
-{
-  for (var i = 0; i < 3; i = i + 1) 
-  { 
-    f(i); 
-  }
-}
+var counter = 0; 
+var five = fun (f) {
+  for(var i = 0; i < 5; i = i + 1)
+    f(i);
+}; 
 
-triple(fun (i) { 
-  print i; 
-});
-
-var printName = fun(name) { print name; } ;
-
-printName("Michael");
+ 
+five (fun (x) { counter = counter + x; });  
+print counter; 
