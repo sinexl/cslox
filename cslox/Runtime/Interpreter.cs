@@ -91,7 +91,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Function(var name, var parameters, var body) s:
             {
-                LoxFunction function = new LoxFunction(s);
+                LoxFunction function = new LoxFunction(s, Context);
                 Context.Define(name, function);
                 return;
             }

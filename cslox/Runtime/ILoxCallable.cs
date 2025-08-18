@@ -27,14 +27,15 @@ public class DotnetFunction : ILoxCallable
 
 public class LoxFunction : ILoxCallable
 {
-    public LoxFunction(Function declaration)
+    public LoxFunction(Function declaration, ExecutionContext closure)
     {
         Declaration = declaration;
+        Closure = closure;
     }
 
     public object? Call(Interpreter interpreter, IList<object?> arguments)
     {
-        var context = new ExecutionContext(interpreter.Globals);
+        var context = new ExecutionContext(Closure);
         for (int i = 0; i < Declaration.Params.Length; i++)
         {
             context.Define(Declaration.Params[i].Lexeme, arguments[i]);
@@ -46,13 +47,14 @@ public class LoxFunction : ILoxCallable
         }
         catch (LoxReturnException e)
         {
-            return e.Value; 
+            return e.Value;
         }
-        return null; 
+
+        return null;
     }
 
     public Function Declaration { get; init; }
-
     public int Arity => Declaration.Params.Length;
-    public override string ToString() => $"<fun {Declaration.Name}>"; 
+    public ExecutionContext Closure { get; }
+    public override string ToString() => $"<fun {Declaration.Name}>";
 }
