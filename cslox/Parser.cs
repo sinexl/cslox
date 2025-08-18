@@ -118,6 +118,11 @@ public class Parser
         return ParseStatement() ?? SyncAndNull<Statement>();
     }
 
+    // TODO: 
+    // This is an issue that we have currently. 
+    // fun () {} ;
+    // This code should create a lambda function and discard it, since it's not assigned to variable.
+    // But now, above code just prints an error since it tries to parse it as a function declaration, which requires name 
     private Statement? ParseFunctionDeclaration()
     {
         if (!ExpectAndConsume(TokenType.Fun, out Token funTk)) return null;
