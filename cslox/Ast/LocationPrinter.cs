@@ -55,10 +55,28 @@ public class LocationPrinter : IExpressionVisitor<string>
                     Impl(left, indent + 1);
                     Impl(right, indent + 1);
                     break;
+                case Call(var callee, var arguments):
+                {
+                    Impl(callee, indent + 1); 
+                    foreach (var arg in arguments)
+                    {
+                        Impl(arg, indent + 2);
+                    }
+
+                    break;
+                }
+
+                case Lambda(var @params, var body):
+                {
+                    var paramsAsStr = string.Join<Token>(", ", @params);  
+                    sb[previousIndex - 1] = ' '; // remove the newline 
+                    sb.Insert(previousIndex, $"lambda`{@params.Length}({paramsAsStr})\n");
+                    break;
+                }
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 21 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 22 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);

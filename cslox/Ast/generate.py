@@ -280,6 +280,7 @@ def main():
                 Ast("ReadVariable", "string Name"),
                 Ast("Assign", f"string Name, {expression_name} Value"),
                 Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"),
+                Ast("Lambda", "Token[] Params, Statement[] Body"),
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),
