@@ -1,6 +1,11 @@
-fun c(a, b, c, d) 
+fun triple(f) 
 {
-  print c;
-  return 10, 11, 12;  
+  for (var i = 0; i < 3; i = i + 1) 
+  { 
+    f(i); 
+  }
 }
-return; 
+
+triple(fun (i) { 
+  print i; 
+});

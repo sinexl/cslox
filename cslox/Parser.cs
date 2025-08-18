@@ -47,7 +47,9 @@ Syntax:
                                 | call ;
         call                  → primary ( "(" arguments ? ")" )* ;
         arguments             → expression ( "," expression )* ;
-        primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER
+        lambdaDeclaration     → "fun" lambda ;
+        lambda                → "(" parameters? ")" block ;
+        primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER | lambda
                               | "(" expression ")" ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
@@ -123,6 +125,14 @@ public class Parser
         var loc = funTk.Location;
         if (!ExpectAndConsume(TokenType.Identifier, out var functionName)) return null;
 
+        var all = ParseFunctionParametersAndStatements();
+        if (all is null) return null;
+        var (parameters, statements) = all.Value;
+        return new Function(functionName.Lexeme, parameters, statements) { Location = loc };
+    }
+
+    private (Token[], Statement[])? ParseFunctionParametersAndStatements()
+    {
         if (!ExpectAndConsume(TokenType.LeftParen)) return null;
 
         List<Token> parameters = new();
@@ -153,7 +163,8 @@ public class Parser
         if (!ExpectAndConsume(TokenType.RightParen)) return null;
         var statements = ParseBlock();
         if (statements is null) return null;
-        return new Function(functionName.Lexeme, parameters.ToArray(), statements) { Location = loc };
+
+        return (parameters.ToArray(), statements);
     }
 
     private Statement? ParseVariableDeclaration()
@@ -229,7 +240,7 @@ public class Parser
         if (!ExpectAndConsume(TokenType.Return, out var returnTk)) return null;
         Debug.Assert(returnTk.Type == TokenType.Return);
 
-        Expression? value = null; 
+        Expression? value = null;
         if (PeekToken().Type != TokenType.Semicolon)
         {
             value = ParseExpression();
@@ -625,9 +636,15 @@ public class Parser
     private Expression? ParsePrimary()
     {
         SourceLocation loc = PeekToken().Location;
+        var state = SaveState();
         if (Match(TokenType.False)) return CreateLiteral(false);
         if (Match(TokenType.True)) return CreateLiteral(true);
         if (Match(TokenType.Nil)) return CreateLiteral(null);
+        if (Match(TokenType.Fun))
+        {
+            RestoreState(state);
+            return ParseLambda();
+        }
 
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
@@ -644,6 +661,19 @@ public class Parser
 
         Error(PeekToken().Location, "Expected expression");
         return null;
+    }
+
+    private Expression? ParseLambda()
+    {
+        if (!ExpectAndConsume(TokenType.Fun, out var funTk)) return null;
+        Debug.Assert(funTk.Type == TokenType.Fun);
+        SourceLocation funLoc = funTk.Location;
+
+        var all = ParseFunctionParametersAndStatements();
+        if (all is null) return null;
+        var (parameters, statements) = all.Value;
+
+        return new Lambda(parameters, statements) { Location = funLoc };
     }
 
     private bool Match(params Span<TokenType> types)
