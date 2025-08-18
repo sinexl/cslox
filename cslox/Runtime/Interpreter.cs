@@ -231,9 +231,14 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location);
                 }
             }
+            case Lambda(_, _) s:
+            {
+                LoxFunction function = new LoxFunction(s, Context);
+                return function; 
+            }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 21 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 22 ? 0 : -1;
         _ = staticAssert;
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");

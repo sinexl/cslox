@@ -1,24 +1,15 @@
-for (var i = 0; i < 10; i = i + 1) 
+fun triple(f) 
 {
-  for(var j = 0; j < 5; j = j + 1) 
+  for (var i = 0; i < 3; i = i + 1) 
   { 
-    break; 
-    print "This should never be printed"; 
-  } 
-  print i; 
-}
-print "----------------------------"; 
-
-fun makeCounter() 
-{
-  var i = 0; 
-  fun count() { 
-    i = i + 1; 
-    return i; 
+    f(i); 
   }
-  return count; 
 }
 
-var counter = makeCounter(); 
-print counter();  // 1 
-print counter();  // 2
+triple(fun (i) { 
+  print i; 
+});
+
+var printName = fun(name) { print name; } ;
+
+printName("Michael");
