@@ -5,18 +5,17 @@ namespace cslox.Runtime;
 
 public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
-    public ExecutionContext Globals { get; init; }
-    public ExecutionContext Context { get; set; }
-
     public Interpreter()
     {
-        Globals = new();
+        Globals = new ExecutionContext();
         Context = Globals;
         Globals.Define("clock", new DotnetFunction(0, () => DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0));
     }
 
-    object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression)
-        => Evaluate(expression);
+    public ExecutionContext Globals { get; }
+    public ExecutionContext Context { get; set; }
+
+    object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression) => Evaluate(expression);
 
     Unit IStatementVisitor<Unit>.Visit<TStatement>(TStatement statement)
     {
@@ -38,10 +37,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case VarDeclaration(var name, var initializer):
             {
                 object? value = null;
-                if (initializer is not null)
-                {
-                    value = Evaluate(initializer);
-                }
+                if (initializer is not null) value = Evaluate(initializer);
 
                 try
                 {
@@ -72,7 +68,6 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case While(var condition, var body):
             {
                 while (Evaluate(condition).ToLoxBool())
-                {
                     try
                     {
                         Execute(body);
@@ -81,7 +76,6 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     {
                         break;
                     }
-                }
 
                 return;
             }
@@ -89,9 +83,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             {
                 throw new LoxBreakException("Break should be only used inside loops.", @break.Location);
             }
-            case Function(var name, var parameters, var body) s:
+            case Function(var name, _, _) s:
             {
-                LoxFunction function = new LoxFunction(s, Context);
+                var function = new LoxFunction(s, Context);
                 Context.Define(name, function);
                 return;
             }
@@ -110,7 +104,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
     public void ExecuteBlock(IList<Statement> statements, ExecutionContext ctx)
     {
-        ExecutionContext previous = Context;
+        var previous = Context;
         try
         {
             Context = ctx;
@@ -131,7 +125,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case Literal(var literal): return literal;
             case Unary(var expr, var op):
             {
-                object? right = Evaluate(expr);
+                var right = Evaluate(expr);
                 return op.Type switch
                 {
                     TokenType.Minus => -right.ToLoxDouble(expr),
@@ -141,8 +135,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Binary(var left, var right) e when e is not LogicalAnd and not LogicalOr:
             {
-                object? leftValue = Evaluate(left);
-                object? rightValue = Evaluate(right);
+                var leftValue = Evaluate(left);
+                var rightValue = Evaluate(right);
 
                 switch (e)
                 {
@@ -178,8 +172,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Binary(var left, var right) e when e is LogicalAnd or LogicalOr:
             {
-                object? leftValue = Evaluate(left);
-                bool leftBool = leftValue.ToLoxBool();
+                var leftValue = Evaluate(left);
+                var leftBool = leftValue.ToLoxBool();
                 if (e is LogicalOr)
                 {
                     if (leftBool) return leftValue;
@@ -193,7 +187,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Assign(var name, var expr):
             {
-                object? value = Evaluate(expr);
+                var value = Evaluate(expr);
                 try
                 {
                     Context.Assign(name, value);
@@ -207,7 +201,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Call(var calleeExpr, var argumentsExpr):
             {
-                object? callee = Evaluate(calleeExpr);
+                var callee = Evaluate(calleeExpr);
 
                 var arguments = argumentsExpr.Select(Evaluate).ToArray();
                 var loc = calleeExpr.Location;
@@ -233,8 +227,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Lambda(_, _) s:
             {
-                LoxFunction function = new LoxFunction(s, Context);
-                return function; 
+                var function = new LoxFunction(s, Context);
+                return function;
             }
         }
 
