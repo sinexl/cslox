@@ -21,8 +21,8 @@ public class DotnetFunction : ILoxCallable
         return Callback();
     }
 
-    public Func<object?> Callback { get; init; }
-    public int Arity { get; init; }
+    public Func<object?> Callback { get; }
+    public int Arity { get; }
 }
 
 public class LoxFunction : ILoxCallable
@@ -73,12 +73,12 @@ public class LoxFunction : ILoxCallable
         return null;
     }
 
-    public Token[] Params { get; set; }
-    public Statement[] Body { get; set; }
+    public Token[] Params { get; }
+    public Statement[] Body { get; }
     private int _arity;
     public int Arity => _arity;
-    public string Name { get; set; }
-    public SourceLocation Location { get; set; }
+    public string Name { get; }
+    public SourceLocation Location { get; }
 
     public ExecutionContext Closure { get; }
     public override string ToString() => $"<fun {Name}>";
