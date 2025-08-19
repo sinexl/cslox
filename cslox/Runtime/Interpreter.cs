@@ -237,4 +237,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");
     }
+
+    public void Resolve(Expression expression, int scopesCount)
+    {
+        throw new NotImplementedException();
+    }
 }
