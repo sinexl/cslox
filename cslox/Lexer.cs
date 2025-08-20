@@ -152,16 +152,24 @@ public class Lexer
                     SkipChar();
             else if (StartsWith("/*"))
             {
-                // TODO: Consider supporting nested multi-line comments. 
-                while (!StartsWith("*/"))
+                int nestedComments = 1;
+                while (nestedComments > 0)
                 {
-                    if (IsEof())
+                    while (!StartsWith("*/"))
                     {
-                        Error("Unterminated comment");
-                        return;
+                        if (StartsWithPeek("/*"))
+                            nestedComments++;
+
+                        if (IsEof())
+                        {
+                            Error("Unterminated multi-line comment");
+                            return;
+                        }
+
+                        SkipChar();
                     }
 
-                    SkipChar();
+                    nestedComments--;
                 }
             }
             else if (StartsWith("//"))
@@ -186,7 +194,7 @@ public class Lexer
 
         var word = Src.AsSpan(start, _state.Current - start);
 
-        TokenType type = word.ToTokenType(); 
+        TokenType type = word.ToTokenType();
 
         string wordStr = word.ToString();
         return CreateToken(type, wordStr, wordStr);
@@ -339,12 +347,16 @@ public class Lexer
 
     private bool StartsWith(string prefix)
     {
+        bool res = StartsWithPeek(prefix); 
+        if (res) _state.Current += prefix.Length;
+        return res; 
+    }
+
+    private bool StartsWithPeek(string prefix)
+    {
         if (IsEof(_state.Current + prefix.Length)) return false;
         if (Src.AsSpan(_state.Current).StartsWith(prefix))
-        {
-            _state.Current += prefix.Length;
             return true;
-        }
 
         return false;
     }

@@ -48,6 +48,7 @@ void RunFile(string filePath)
     var runner = new Runner(filePath) { AllowRedefinition = false };
     // runner.OnResolverFinish += debugResolver; 
     // runner.OnParserFinish += debugAst; 
+    // runner.OnTokenizerFinish += debugTokens; 
     var src = File.ReadAllText(filePath);
     var (errors, exceptions) = runner.Run(src);
     if (errors.Length > 0)
