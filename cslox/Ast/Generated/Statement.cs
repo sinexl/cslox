@@ -33,9 +33,11 @@ public class ExpressionStatement(Expression expression) : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("ExpressionStatement");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("ExpressionStatement");
         sb.Append('\n');
-        sb.Append(Expression.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Expression =\n{Expression.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -52,9 +54,11 @@ public class Print(Expression expression) : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Print");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Print");
         sb.Append('\n');
-        sb.Append(Expression.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Expression =\n{Expression.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -72,10 +76,12 @@ public class VarDeclaration(Identifier name, Expression? initializer) : Statemen
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("VarDeclaration");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("VarDeclaration");
         sb.Append($" ({Name})");
         sb.Append('\n');
-        sb.Append(Initializer?.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Initializer =\n{Initializer?.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -92,9 +98,11 @@ public class Block(Statement[] statements) : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Block");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Block");
         sb.Append('\n');
-        sb.Append(Statements.ArrayTreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Statements =\n{Statements.ArrayTreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -113,11 +121,13 @@ public class If(Expression condition, Statement then, Statement? @else) : Statem
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("If");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("If");
         sb.Append('\n');
-        sb.Append(Condition.TreePrint(indent + 1));
-        sb.Append(Then.TreePrint(indent + 1));
-        sb.Append(Else?.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Condition =\n{Condition.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Then =\n{Then.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Else =\n{Else?.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -135,10 +145,12 @@ public class While(Expression condition, Statement body) : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("While");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("While");
         sb.Append('\n');
-        sb.Append(Condition.TreePrint(indent + 1));
-        sb.Append(Body.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Condition =\n{Condition.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Body =\n{Body.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -157,10 +169,12 @@ public class Function(Identifier name, Identifier[] @params, Statement[] body) :
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Function");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Function");
         sb.Append($" ({Name}, {Params})");
         sb.Append('\n');
-        sb.Append(Body.ArrayTreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Body =\n{Body.ArrayTreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -174,8 +188,10 @@ public class Break : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Break");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Break");
         sb.Append('\n');
+        tab = new string(' ', (indent + 1) * 2);
         return sb.ToString();
     }
 }
@@ -192,9 +208,11 @@ public class Return(Expression value) : Statement
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Return");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Return");
         sb.Append('\n');
-        sb.Append(Value.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Value =\n{Value.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }

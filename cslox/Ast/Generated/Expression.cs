@@ -33,9 +33,11 @@ public class Grouping(Expression expression) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Grouping");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Grouping");
         sb.Append('\n');
-        sb.Append(Expression.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Expression =\n{Expression.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -52,9 +54,11 @@ public class Literal(object? value) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Literal");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Literal");
         sb.Append($" ({Value})");
         sb.Append('\n');
+        tab = new string(' ', (indent + 1) * 2);
         return sb.ToString();
     }
 }
@@ -72,10 +76,12 @@ public class Unary(Expression expression, Token @operator) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Unary");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Unary");
         sb.Append($" ({Operator})");
         sb.Append('\n');
-        sb.Append(Expression.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Expression =\n{Expression.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -92,9 +98,11 @@ public class Sequence(Expression[] expressions) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Sequence");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Sequence");
         sb.Append('\n');
-        sb.Append(Expressions.ArrayTreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Expressions =\n{Expressions.ArrayTreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -111,9 +119,11 @@ public class ReadVariable(Identifier name) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("ReadVariable");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("ReadVariable");
         sb.Append($" ({Name})");
         sb.Append('\n');
+        tab = new string(' ', (indent + 1) * 2);
         return sb.ToString();
     }
 }
@@ -131,10 +141,12 @@ public class Assign(Identifier name, Expression value) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Assign");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Assign");
         sb.Append($" ({Name})");
         sb.Append('\n');
-        sb.Append(Value.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Value =\n{Value.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -152,10 +164,12 @@ public class Call(Expression callee, Expression[] arguments) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Call");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Call");
         sb.Append('\n');
-        sb.Append(Callee.TreePrint(indent + 1));
-        sb.Append(Arguments.ArrayTreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Callee =\n{Callee.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Arguments =\n{Arguments.ArrayTreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -173,10 +187,12 @@ public class Lambda(Identifier[] @params, Statement[] body) : Expression
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Lambda");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Lambda");
         sb.Append($" ({Params})");
         sb.Append('\n');
-        sb.Append(Body.ArrayTreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Body =\n{Body.ArrayTreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -203,10 +219,12 @@ public class Addition(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Addition");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Addition");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -222,10 +240,12 @@ public class Subtraction(Expression left, Expression right) : Binary(left, right
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Subtraction");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Subtraction");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -241,10 +261,12 @@ public class Multiplication(Expression left, Expression right) : Binary(left, ri
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Multiplication");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Multiplication");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -260,10 +282,12 @@ public class Division(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Division");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Division");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -279,10 +303,12 @@ public class Equality(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Equality");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Equality");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -298,10 +324,12 @@ public class Inequality(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Inequality");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Inequality");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -317,10 +345,12 @@ public class Greater(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Greater");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Greater");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -336,10 +366,12 @@ public class GreaterEqual(Expression left, Expression right) : Binary(left, righ
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("GreaterEqual");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("GreaterEqual");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -355,10 +387,12 @@ public class Less(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("Less");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Less");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -374,10 +408,12 @@ public class LessEqual(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("LessEqual");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("LessEqual");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -393,10 +429,12 @@ public class LogicalAnd(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("LogicalAnd");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("LogicalAnd");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }
@@ -412,10 +450,12 @@ public class LogicalOr(Expression left, Expression right) : Binary(left, right)
     public override string TreePrint(int indent)
     {
         var sb = new StringBuilder();
-        sb.Append(new string(' ', indent * 2)).Append("LogicalOr");
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("LogicalOr");
         sb.Append('\n');
-        sb.Append(Left.TreePrint(indent + 1));
-        sb.Append(Right.TreePrint(indent + 1));
+        tab = new string(' ', (indent + 1) * 2);
+        sb.Append(tab).Append($"Left =\n{Left.TreePrint(indent + 2)}");
+        sb.Append(tab).Append($"Right =\n{Right.TreePrint(indent + 2)}");
         return sb.ToString();
     }
 }

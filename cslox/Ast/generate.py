@@ -195,7 +195,8 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
             f.writeln(f"{TAB}public override string ToString() => TreePrint(indent: 0);")
             f.writeln(f"{TAB}public override string TreePrint(int indent)\n{TAB}{{")
             f.writeln(f"{TAB * 2}var sb = new StringBuilder();")
-            f.writeln(f"{TAB * 2}sb.Append(new string(' ', indent * 2)).Append(\"{ast.name}\");")
+            f.writeln(f"{TAB * 2}var tab = new string(' ', indent * 2);")
+            f.writeln(f"{TAB * 2}sb.Append(tab).Append(\"{ast.name}\");")
             # TODO: Factor out hierarchies 
             non_expressions = [t for t in total_fields or [] if not t[0].startswith("Expression")
                                and not t[0].startswith("Statement")]
@@ -205,6 +206,7 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                                                               type_mangle=discard)
                 f.writeln(f"{TAB * 2}sb.Append($\" {non_expressions_as_str}\");")
             f.writeln(f"{TAB * 2}sb.Append(\'\\n\');")
+            f.writeln(f"{TAB * 2}tab = new string(' ', (indent + 1) * 2);")
             other = [t for t in total_fields if t[0].startswith("Expression") or t[0].startswith("Statement")]
             for field_type, field_name in other:
                 nullable = ""
@@ -213,9 +215,9 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                 else:
                     nullable = ""
                 if not field_type.endswith("[]"):
-                    f.writeln(f"{TAB * 2}sb.Append({field_name}{nullable}.TreePrint(indent + 1));")
+                    f.writeln(f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.TreePrint(indent + 2)}}\");")
                 else:
-                    f.writeln(f"{TAB * 2}sb.Append({field_name}{nullable}.ArrayTreePrint(indent + 1));")
+                    f.writeln(f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.ArrayTreePrint(indent + 2)}}\");")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
 
