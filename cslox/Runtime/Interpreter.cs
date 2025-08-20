@@ -7,6 +7,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
     public Interpreter()
     {
+        _locals = new(); 
         Globals = new ExecutionContext();
         Context = Globals;
         Globals.Define("clock", new DotnetFunction(0, () => DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0));
@@ -240,6 +241,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
     public void Resolve(Expression expression, int scopesCount)
     {
-        throw new NotImplementedException();
+        _locals[expression] = scopesCount; 
     }
+
+    private Dictionary<Expression, int> _locals; 
 }

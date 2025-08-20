@@ -147,8 +147,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     {
         foreach (var (i, scope) in _scopes.EnumerateWithIndex())
             if (scope.ContainsKey(name))
-                // Interpreter.Resolve(expression, _scopes.Count - i - 1);
-                Resolutions[expression] = _scopes.Count - 1 - i;
+                Interpreter.Resolve(expression, _scopes.Count - i - 1);
+                // Resolutions[expression] = _scopes.Count - 1 - i;
     }
 
     private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, message));
@@ -161,8 +161,14 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     public void ExitScope() => _scopes.Pop();
 
     private Stack<Dictionary<string, bool>> _scopes = new();
+
+    public Resolver(Interpreter interpreter)
+    {
+        Interpreter = interpreter;
+    }
+
     public List<Error> Errors { get; } = [];
-    public Dictionary<Expression, int> Resolutions = new();
+    public Interpreter Interpreter { get; set; }
 }
 
 public static class ResolverExtensions

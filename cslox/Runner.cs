@@ -52,7 +52,7 @@ public class Runner
         if (statements is null)
             return (errors.ToArray(), []);
 
-        var resolver = new Resolver();
+        var resolver = new Resolver(Interpreter);
         resolver.Resolve(statements);
         errors.AddRangeAndReport(resolver.Errors, Report);
         if (resolver.Errors.Count > 0) 
