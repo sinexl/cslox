@@ -28,6 +28,15 @@ public class ResolverTest
     }
 
     [Fact]
+    public void TopLevelReturn()
+    {
+        var src = "return 10;"; 
+        var errors = ResolveBlockErrors(src);
+        Assert.Collection(errors,
+            e => Assert.IsType<TopLevelReturn>(e)); 
+    }
+
+    [Fact]
     public void WithScopeMutation()
     {
         var src =
