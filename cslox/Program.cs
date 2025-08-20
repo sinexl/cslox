@@ -21,6 +21,13 @@ int Main(string[] args)
     return 0;
 }
 
+
+Action<IList<Token>, IList<Error>> debugTokens =
+    (tokens, _) => { tokens.ForEach(Console.WriteLine); };
+
+Action<IList<Statement>?, IList<Error>> debugAst =
+    (list, _) => { list?.ForEach(Console.WriteLine); };
+
 return Main(args);
 
 
@@ -50,12 +57,6 @@ void Repl()
     bool enableTokenDebugging = false;
     bool enableAstDebugging = false;
     bool dry = false;
-
-    Action<IList<Token>, IList<Error>> debugTokens =
-        (tokens, _) => { tokens.ForEach(Console.WriteLine); };
-
-    Action<IList<Statement>?, IList<Error>> debugAst =
-        (list, _) => { list?.ForEach(Console.WriteLine); };
 
 
     var runner = new Runner("<REPL>") { AllowRedefinition = true };

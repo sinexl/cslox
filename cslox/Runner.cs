@@ -42,7 +42,6 @@ public class Runner
 
         var lexer = new Lexer(src, FilePath);
         var tokens = lexer.Accumulate();
-        // tokens.ForEach(Console.WriteLine);
         OnTokenizerFinish?.Invoke(tokens, lexer.Errors);
         errors.AddRangeAndReport(lexer.Errors, Report);
 
@@ -52,6 +51,12 @@ public class Runner
         OnParserFinish?.Invoke(statements, parser.Errors);
         if (statements is null)
             return (errors.ToArray(), []);
+
+        var resolver = new Resolver();
+        resolver.Resolve(statements);
+        errors.AddRangeAndReport(resolver.Errors, Report);
+        if (resolver.Errors.Count > 0) 
+            return (errors.ToArray(), []); 
 
         if (Dry) return (errors.ToArray(), []);
         // Running 
