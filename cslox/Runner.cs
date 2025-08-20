@@ -6,10 +6,17 @@ namespace cslox;
 public class Runner
 {
     // Events 
-    public event Action<Token[], IList<Error>>? OnTokenizerFinish;
+    public delegate void TokenHandler(Token[] tokens, IList<Error> errors);
 
-    public event Action<IList<Statement>?, IList<Error>>? OnParserFinish;
-    public event Action<IDictionary<Expression, int>, IList<Error>>? OnResolverFinish;   
+    public delegate void ParserHandler(Statement[]? statements, IList<Error> errors);
+
+    public delegate void ResolverHandler(Dictionary<Expression, int> locals, IList<Error> errors,
+        IList<Warning> warnings);
+
+    public event TokenHandler? OnTokenizerFinish;
+
+    public event ParserHandler? OnParserFinish;
+    public event ResolverHandler? OnResolverFinish;
 
     // Fields 
     public Interpreter Interpreter;
@@ -40,6 +47,7 @@ public class Runner
     public (Error[], LoxRuntimeException[]) Run(string src)
     {
         List<Error> errors = [];
+        List<Warning> warnings = [];
 
         var lexer = new Lexer(src, FilePath);
         var tokens = lexer.Accumulate();
@@ -56,9 +64,10 @@ public class Runner
         var resolver = new Resolver(Interpreter);
         resolver.Resolve(statements);
         errors.AddRangeAndReport(resolver.Errors, Report);
-        OnResolverFinish?.Invoke(resolver.Interpreter.Locals, resolver.Errors);
-        if (resolver.Errors.Count > 0) 
-            return (errors.ToArray(), []); 
+        warnings.AddRangeAndReport(resolver.Warnings, Report);
+        OnResolverFinish?.Invoke(resolver.Interpreter.Locals, resolver.Errors, resolver.Warnings);
+        if (resolver.Errors.Count > 0)
+            return (errors.ToArray(), []);
 
         if (Dry) return (errors.ToArray(), []);
         // Running 
@@ -82,11 +91,12 @@ public class Runner
 
 public static class RunnerExtensions
 {
-    public static void AddRangeAndReport(this List<Error> errors, IList<Error> errorsToAdd, bool doReport)
+    public static void AddRangeAndReport<T>(this List<T> items, IList<T> itemsToAdd, bool doReport)
+        where T : WarningOrError
     {
-        errors.AddRange(errorsToAdd);
+        items.AddRange(itemsToAdd);
         if (!doReport) return;
-        foreach (var error in errorsToAdd)
+        foreach (var error in itemsToAdd)
         {
             Console.Error.WriteLine(error);
         }

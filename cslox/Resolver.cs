@@ -87,7 +87,11 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                     var currentScope = _scopes.Peek();
                     if (currentScope.TryGetValue(name, out var value))
                         if (value.IsDefined is false)
+                        {
                             Error(new ReadingFromInitializer(value.Name));
+                        }
+                        else
+                            value.IsRead = true;
                 }
 
                 ResolveLocal(r, name);
@@ -171,21 +175,20 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             }
     }
 
-    private void Error(Error error) => Errors.Add(error);
 
     public void EnterScope() => _scopes.Push(new());
 
     public void ExitScope()
     {
-        _ = _scopes.Pop();
-        /*
-         foreach (var (_, v) in currentScope)
-             if (!v.IsRead)
-                 Error(new UnusedVariable(v.Name));
-        */
+        var currentScope = _scopes.Pop();
+        foreach (var (_, v) in currentScope)
+            if (!v.IsRead)
+                Warning(new UnusedVariable(v.Name));
     }
 
     private Stack<Dictionary<string, Variable>> _scopes = new();
+    private void Error(AnalysisError error) => Errors.Add(error);
+    private void Warning(AnalysisWarning warning) => Warnings.Add(warning);
 
     public Resolver(Interpreter interpreter)
     {
@@ -193,6 +196,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     }
 
     public List<Error> Errors { get; } = [];
+    public List<Warning> Warnings { get; } = [];
     private FunctionType _currentFunction = FunctionType.None;
     public Interpreter Interpreter { get; set; }
 }
@@ -234,10 +238,10 @@ public class Variable
 public abstract class AnalysisError(SourceLocation location, string message, string? note = null)
     : Error(location, message, note);
 
-public class VariableRedefinition : AnalysisError 
+public class VariableRedefinition : AnalysisError
 {
     public VariableRedefinition(Identifier firstDefined, Identifier redefinition) :
-        base(redefinition.Location, $"Variable {redefinition.Id} is already defined.",
+        base(redefinition.Location, $"Variable `{redefinition.Id}` is already defined.",
             note: $"First definition happens here: \n\t\t{firstDefined}")
     {
         if (redefinition.Id != firstDefined.Id) throw new ArgumentException("Ids should be the same.");
@@ -254,12 +258,17 @@ public class TopLevelReturn(Return expr) : AnalysisError(expr.Location, "Cannot 
     public Return Expr { get; init; } = expr;
 }
 
-public class ReadingFromInitializer(Identifier id) : AnalysisError(id.Location, $"Cannot read variable {id.Id} from it's initializer")
+public class ReadingFromInitializer(Identifier id)
+    : AnalysisError(id.Location, $"Cannot read variable `{id.Id}` from it's initializer")
 {
     public Identifier Id { get; init; } = id;
 }
 
-public class UnusedVariable(Identifier variable) : AnalysisError(variable.Location, $"Variable {variable.Id} is unused",
+public class AnalysisWarning(SourceLocation location, string message, string? note = null)
+    : Warning(location, message, note);
+
+public class UnusedVariable(Identifier variable) : AnalysisWarning(variable.Location,
+    $"Variable `{variable.Id}` is unused",
     $"Definition happens here: \n\t\t{variable.Location}")
 {
     public Identifier Variable { get; init; } = variable;

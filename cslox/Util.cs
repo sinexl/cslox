@@ -92,19 +92,30 @@ public record struct SourceLocation()
     public override string ToString() => $"{File}:{Line}:{Offset}";
 }
 
-public class Error
+public class WarningOrError
 {
-    public Error(SourceLocation location, string message, string? note = null)
+    public WarningOrError(SourceLocation location, string message, string? note = null)
     {
         Location = location;
         Message = message;
-        Note = note; 
+        Note = note;
     }
 
-    public SourceLocation Location { get; init; } 
-    public string Message { get; init; } 
+    public SourceLocation Location { get; init; }
+    public string Message { get; init; }
     public string? Note { get; init; }
-    public override string ToString() => $"{Location}: {Message}.\n\tNote: {Note}";
+}
+
+public class Error(SourceLocation location, string message, string? note = null)
+    : WarningOrError(location, message, note)
+{
+    public override string ToString() => $"{Location}: error: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
+}
+
+public class Warning(SourceLocation location, string message, string? note = null)
+    : WarningOrError(location, message, note)
+{
+    public override string ToString() => $"{Location}: warning: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
 }
 
 public struct Unit : IEquatable<Unit>
@@ -129,12 +140,13 @@ public struct Identifier
         Location = location;
     }
 
-    public override string ToString() => Id; 
+    public override string ToString() => Id;
+
     public void Deconstruct(out string id, out SourceLocation location)
     {
         id = Id;
         location = Location;
-    } 
-    public static implicit operator string(Identifier identifier) => identifier.Id; 
+    }
 
+    public static implicit operator string(Identifier identifier) => identifier.Id;
 }

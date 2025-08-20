@@ -22,14 +22,14 @@ int Main(string[] args)
 }
 
 
-Action<IList<Token>, IList<Error>> debugTokens =
+Runner.TokenHandler debugTokens =
     (tokens, _) => { tokens.ForEach(Console.WriteLine); };
 
-Action<IList<Statement>?, IList<Error>> debugAst =
+Runner.ParserHandler debugAst =
     (list, _) => { list?.ForEach(Console.WriteLine); };
 
-Action<IDictionary<Expression, int>, IList<Error>> debugResolver =
-    (dict, errors) =>
+Runner.ResolverHandler debugResolver =
+    (dict, errors, warnings) =>
     {
         Console.WriteLine("Locals:");
         foreach (var (key, value) in dict)
@@ -45,7 +45,11 @@ return Main(args);
 
 void RunFile(string filePath)
 {
-    var runner = new Runner(filePath) { AllowRedefinition = false };
+    var runner = new Runner(filePath)
+    {
+        AllowRedefinition = false,
+        Report = true
+    };
     // runner.OnResolverFinish += debugResolver; 
     // runner.OnParserFinish += debugAst; 
     // runner.OnTokenizerFinish += debugTokens; 
