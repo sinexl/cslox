@@ -43,7 +43,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Function(var name, _, _) s:
                 Declare(name);
                 Define(name);
-                ResolveFunction(s.GetInfo());
+                ResolveFunction(s.GetInfo(), FunctionType.Function);
+                ;
                 return;
             case If(var condition, var thenBranch, var elseBranch):
                 Resolve(condition);
@@ -54,14 +55,16 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Resolve(condition);
                 Resolve(body);
                 return;
-            // base cases. TODO: factor them out 
+            // base cases. 
             case ExpressionStatement(var expression):
                 Resolve(expression);
                 return;
             case Print(var expression):
                 Resolve(expression);
                 return;
-            case Return(var expression):
+            case Return(var expression) returnExpr:
+                if (_currentFunction == FunctionType.None)
+                    Error(returnExpr.Location, "Cannot return from top-level code.");
                 Resolve(expression);
                 return;
             case Break: return;
@@ -103,7 +106,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 foreach (var argument in arguments) Resolve(argument);
                 return;
             case Lambda s:
-                ResolveFunction(s.GetInfo());
+                ResolveFunction(s.GetInfo(), FunctionType.Function);
                 return;
             // 
             case Grouping(var expr):
@@ -121,8 +124,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         }
     }
 
-    private void ResolveFunction(LoxFunctionInfo function)
+    private void ResolveFunction(LoxFunctionInfo function, FunctionType type)
     {
+        FunctionType enclosing = _currentFunction;
+        _currentFunction = type;
         EnterScope();
         foreach (var param in function.Params)
         {
@@ -132,6 +137,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
 
         Resolve(function.Body);
         ExitScope();
+        _currentFunction = enclosing;
     }
 
 
@@ -183,6 +189,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     }
 
     public List<Error> Errors { get; } = [];
+    private FunctionType _currentFunction = FunctionType.None;
     public Interpreter Interpreter { get; set; }
 }
 
@@ -200,4 +207,10 @@ public static class ResolverExtensions
             yield return ret;
         }
     }
+}
+
+public enum FunctionType
+{
+    None,
+    Function,
 }

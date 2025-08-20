@@ -171,8 +171,30 @@ public static class TokenTypeExtensions
             // Keywords
             TokenType.And or TokenType.Class or TokenType.Else or TokenType.Fun or TokenType.For or TokenType.If or
                 TokenType.Or or TokenType.Print or TokenType.Return or TokenType.Super or TokenType.This
-                or TokenType.Var or TokenType.Break or 
+                or TokenType.Var or TokenType.Break or
                 TokenType.While => $"`{type.ToString().ToLower()}` keyword",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
+
+    public static TokenType ToTokenType(this ReadOnlySpan<char> s) => s switch
+    {
+        "and" => TokenType.And,
+        "class" => TokenType.Class,
+        "else" => TokenType.Else,
+        "false" => TokenType.False,
+        "fun" => TokenType.Fun,
+        "for" => TokenType.For,
+        "if" => TokenType.If,
+        "nil" => TokenType.Nil,
+        "or" => TokenType.Or,
+        "print" => TokenType.Print,
+        "return" => TokenType.Return,
+        "super" => TokenType.Super,
+        "this" => TokenType.This,
+        "true" => TokenType.True,
+        "var" => TokenType.Var,
+        "while" => TokenType.While,
+        "break" => TokenType.Break,
+        _ => TokenType.Identifier
+    };
 }

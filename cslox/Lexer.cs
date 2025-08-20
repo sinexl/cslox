@@ -145,18 +145,22 @@ public class Lexer
 
     private void SkipWhitespacesAndComments()
     {
-        // TODO: Comments are broken. 
         while (true)
         {
             if (char.IsWhiteSpace(PeekChar()))
-                while (char.IsWhiteSpace(PeekChar()))
+                while (char.IsWhiteSpace(PeekChar()) && !IsEof())
                     SkipChar();
             else if (StartsWith("/*"))
             {
                 // TODO: Consider supporting nested multi-line comments. 
                 while (!StartsWith("*/"))
                 {
-                    if (IsEof()) Error("Unterminated comment");
+                    if (IsEof())
+                    {
+                        Error("Unterminated comment");
+                        return;
+                    }
+
                     SkipChar();
                 }
             }
@@ -165,7 +169,7 @@ public class Lexer
                 while (PeekChar() != '\n' && !IsEof())
                     SkipChar();
 
-                SkipChar();
+                if (!IsEof()) SkipChar();
             }
             else break;
         }
@@ -182,28 +186,7 @@ public class Lexer
 
         var word = Src.AsSpan(start, _state.Current - start);
 
-        // TODO: factor out this switch case. 
-        TokenType type = word switch
-        {
-            "and" => TokenType.And,
-            "class" => TokenType.Class,
-            "else" => TokenType.Else,
-            "false" => TokenType.False,
-            "fun" => TokenType.Fun,
-            "for" => TokenType.For,
-            "if" => TokenType.If,
-            "nil" => TokenType.Nil,
-            "or" => TokenType.Or,
-            "print" => TokenType.Print,
-            "return" => TokenType.Return,
-            "super" => TokenType.Super,
-            "this" => TokenType.This,
-            "true" => TokenType.True,
-            "var" => TokenType.Var,
-            "while" => TokenType.While,
-            "break" => TokenType.Break, 
-            _ => TokenType.Identifier
-        };
+        TokenType type = word.ToTokenType(); 
 
         string wordStr = word.ToString();
         return CreateToken(type, wordStr, wordStr);
