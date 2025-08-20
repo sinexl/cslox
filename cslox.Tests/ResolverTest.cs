@@ -11,13 +11,12 @@ namespace cslox.Tests;
 [TestSubject(typeof(Resolver))]
 public class ResolverTest
 {
-    // TODO: Verifying errors by their message is kinda bad and limiting. Introduce some other mechanism for this.
     [Fact]
     public void VariableRedefinition()
     {
         var errors = ResolveBlockErrors("var a = 10; var a = 11;");
         Assert.Collection(errors,
-            e => Assert.Contains("already declared", e.Message));
+            e => Assert.IsType<VariableRedefinition>(e));
     }
 
     [Fact]
@@ -25,7 +24,7 @@ public class ResolverTest
     {
         var errors = ResolveBlockErrors("var a = a;");
         Assert.Collection(errors,
-            e => Assert.Contains("Cannot read local", e.Message, StringComparison.CurrentCultureIgnoreCase));
+            e => Assert.IsType<ReadingFromInitializer>(e));
     }
 
     [Fact]

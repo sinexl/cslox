@@ -92,9 +92,19 @@ public record struct SourceLocation()
     public override string ToString() => $"{File}:{Line}:{Offset}";
 }
 
-public record class Error(SourceLocation Location, string Message)
+public class Error
 {
-    public override string ToString() => $"{Location}: {Message}";
+    public Error(SourceLocation location, string message, string? note = null)
+    {
+        Location = location;
+        Message = message;
+        Note = note; 
+    }
+
+    public SourceLocation Location { get; init; } 
+    public string Message { get; init; } 
+    public string? Note { get; init; }
+    public override string ToString() => $"{Location}: {Message}.\n\tNote: {Note}";
 }
 
 public struct Unit : IEquatable<Unit>

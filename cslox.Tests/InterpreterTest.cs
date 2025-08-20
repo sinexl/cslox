@@ -326,6 +326,8 @@ public class InterpreterTest
         var (errors, exceptions) = runner.Run(src);
         foreach (var ex in exceptions)
             throw ex;
+        foreach (var error in errors)
+            throw new Exception(error.ToString()); 
     }
 
     private static object? InterpretExpr(string src)

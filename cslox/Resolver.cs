@@ -63,7 +63,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 return;
             case Return(var expression) returnExpr:
                 if (_currentFunction == FunctionType.None)
-                    Error(returnExpr.Location, "Cannot return from top-level code.");
+                    Error(new TopLevelReturn(returnExpr));
                 Resolve(expression);
                 return;
             case Break: return;
@@ -86,8 +86,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 {
                     var currentScope = _scopes.Peek();
                     if (currentScope.TryGetValue(name, out var value))
-                        if (value is false)
-                            Error(r.Location, name, "Cannot read local variable in its own initializer.");
+                        if (value.IsDefined is false)
+                            Error(new ReadingFromInitializer(value.Name));
                 }
 
                 ResolveLocal(r, name);
@@ -143,7 +143,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     private void Define(Identifier name)
     {
         if (_scopes.IsEmpty()) return;
-        _scopes.Peek()[name] = true;
+        var scope = _scopes.Peek();
+        if (!scope.TryGetValue(name, out var value)) throw new ArgumentException($"Variable {name} is not declared.");
+        if (value.IsDefined) throw new ArgumentException($"Variable {name} is already defined.");
+        value.IsDefined = true;
     }
 
     private void Declare(Identifier name)
@@ -151,10 +154,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         if (_scopes.IsEmpty()) return;
 
         var scope = _scopes.Peek();
-        if (scope.ContainsKey(name))
-            Error(name.Location, name, "Variable with this name already declared in this scope.");
+        if (scope.TryGetValue(name, out var existing))
+            Error(new VariableRedefinition(existing.Name, name));
 
-        scope[name] = false;
+        scope[name] = new Variable(name) { IsDefined = false };
     }
 
     private void ResolveLocal(Expression expression, string name)
@@ -168,16 +171,21 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             }
     }
 
-    private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, message));
-
-    private void Error(SourceLocation location, string name, string message) =>
-        Errors.Add(new Error(location, $"{name}: {message}"));
+    private void Error(Error error) => Errors.Add(error);
 
     public void EnterScope() => _scopes.Push(new());
 
-    public void ExitScope() => _scopes.Pop();
+    public void ExitScope()
+    {
+        _ = _scopes.Pop();
+        /*
+         foreach (var (_, v) in currentScope)
+             if (!v.IsRead)
+                 Error(new UnusedVariable(v.Name));
+        */
+    }
 
-    private Stack<Dictionary<string, bool>> _scopes = new();
+    private Stack<Dictionary<string, Variable>> _scopes = new();
 
     public Resolver(Interpreter interpreter)
     {
@@ -209,4 +217,50 @@ public enum FunctionType
 {
     None,
     Function,
+}
+
+public class Variable
+{
+    public Identifier Name { get; }
+    public required bool IsDefined { get; set; }
+    public bool IsRead { get; set; } = false;
+
+    public Variable(Identifier name)
+    {
+        Name = name;
+    }
+}
+
+public abstract class AnalysisError(SourceLocation location, string message, string? note = null)
+    : Error(location, message, note);
+
+public class VariableRedefinition : AnalysisError 
+{
+    public VariableRedefinition(Identifier firstDefined, Identifier redefinition) :
+        base(redefinition.Location, $"Variable {redefinition.Id} is already defined.",
+            note: $"First definition happens here: \n\t\t{firstDefined}")
+    {
+        if (redefinition.Id != firstDefined.Id) throw new ArgumentException("Ids should be the same.");
+        FirstDefined = firstDefined;
+        Redefined = redefinition;
+    }
+
+    public Identifier FirstDefined { get; init; }
+    public Identifier Redefined { get; init; }
+}
+
+public class TopLevelReturn(Return expr) : AnalysisError(expr.Location, "Cannot return from top-level code")
+{
+    public Return Expr { get; init; } = expr;
+}
+
+public class ReadingFromInitializer(Identifier id) : AnalysisError(id.Location, $"Cannot read variable {id.Id} from it's initializer")
+{
+    public Identifier Id { get; init; } = id;
+}
+
+public class UnusedVariable(Identifier variable) : AnalysisError(variable.Location, $"Variable {variable.Id} is unused",
+    $"Definition happens here: \n\t\t{variable.Location}")
+{
+    public Identifier Variable { get; init; } = variable;
 }
