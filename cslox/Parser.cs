@@ -147,14 +147,14 @@ public class Parser
         var all = ParseFunctionParametersAndStatements();
         if (all is null) return null;
         var (parameters, statements) = all.Value;
-        return new Function(functionName.Lexeme, parameters, statements) { Location = loc };
+        return new Function(functionName.ToIdentifier(), parameters, statements) { Location = loc };
     }
 
-    private (Token[], Statement[])? ParseFunctionParametersAndStatements()
+    private (Identifier[], Statement[])? ParseFunctionParametersAndStatements()
     {
         if (!ExpectAndConsume(TokenType.LeftParen)) return null;
 
-        List<Token> parameters = new();
+        List<Identifier> parameters = new();
 
         void ReportError(SourceLocation errLoc) => Error(errLoc,
             "Expected comma separated list of arguments in the function declaration ");
@@ -170,11 +170,11 @@ public class Parser
                 {
                     if (element is not ReadVariable(var name) v)
                         ReportError(element.Location);
-                    else parameters.Add(new Token(TokenType.Identifier, name, name, v.Location));
+                    else parameters.Add(new(name, v.Location));
                 }
             }
             else if (expr is ReadVariable(var name) v)
-                parameters.Add(new Token(TokenType.Identifier, name, name, v.Location));
+                parameters.Add(new(name, v.Location));
             else
                 ReportError(expr.Location);
         }
@@ -192,7 +192,6 @@ public class Parser
         if (!ExpectAndConsume(TokenType.Var)) return null;
         if (!ExpectAndConsume(TokenType.Identifier, out var token)) return null;
         Debug.Assert(token.Type == TokenType.Identifier);
-        string name = token.Lexeme;
         Expression? initializer = null;
         if (Match(TokenType.Equal))
         {
@@ -201,7 +200,7 @@ public class Parser
         }
 
         if (!ExpectAndConsume(TokenType.Semicolon)) return null;
-        return new VarDeclaration(name, initializer) { Location = location };
+        return new VarDeclaration(token.ToIdentifier(), initializer) { Location = location };
     }
 
     public Statement? ParseStatement()
@@ -668,7 +667,7 @@ public class Parser
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
 
-        if (Match(TokenType.Identifier)) return new ReadVariable(PeekPrevious().Lexeme) { Location = loc };
+        if (Match(TokenType.Identifier)) return new ReadVariable(PeekPrevious().ToIdentifier()) { Location = loc };
         if (ExpectAndConsume(TokenType.LeftParen))
         {
             SourceLocation parenthesisLoc = PeekPrevious().Location;

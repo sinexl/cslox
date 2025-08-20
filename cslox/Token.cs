@@ -32,6 +32,12 @@ public class Token
         Util.Report(Location, $"Expected {expected.Humanize()}, but got {Type.Humanize()}");
         return false;
     }
+
+    public Identifier ToIdentifier()
+    {
+        if (Type is not TokenType.Identifier) throw new ArgumentException("Token is not an identifier");
+        return new Identifier(Lexeme, Location);
+    }
 }
 
 public enum TokenType

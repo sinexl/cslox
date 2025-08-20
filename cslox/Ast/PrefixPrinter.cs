@@ -54,7 +54,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
                 return Parenthesise(op.Lexeme, inner);
             case Sequence(var expressions): return Sequence("sequence", expressions);
             case Lambda(var @params, var body):
-                string paramsAsStr = string.Join<Token>(", ", @params); 
+                string paramsAsStr = string.Join(", ", @params); 
                 return Sequence($"lambda`{@params.Length}<{paramsAsStr}>",
                     []); // TODO: Add support for statements in PrefixPrinter
             case ReadVariable(var name): return $"{name}.*";

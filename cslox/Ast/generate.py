@@ -277,10 +277,10 @@ def main():
                 Ast("Literal", f"object? Value"),
                 Ast("Unary", f"{expression_name} Expression, Token Operator"),
                 Ast("Sequence", f"{expression_name}[] Expressions"),
-                Ast("ReadVariable", "string Name"),
-                Ast("Assign", f"string Name, {expression_name} Value"),
+                Ast("ReadVariable", "Identifier Name"),
+                Ast("Assign", f"Identifier Name, {expression_name} Value"),
                 Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"),
-                Ast("Lambda", "Token[] Params, Statement[] Body"),
+                Ast("Lambda", "Identifier[] Params, Statement[] Body"),
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),
@@ -303,11 +303,11 @@ def main():
             visitor_name=statement_visitor_name, inheritors=[
                 Ast("ExpressionStatement", f"{expression_name} Expression"),
                 Ast("Print", f"{expression_name} Expression"),
-                Ast("VarDeclaration", f"string Name, Expression? Initializer"),
+                Ast("VarDeclaration", f"Identifier Name, Expression? Initializer"),
                 Ast("Block", f"{statement_name}[] Statements"),
                 Ast("If", f"{expression_name} Condition, {statement_name} Then, {statement_name}? Else"),
                 Ast("While", f"{expression_name} Condition, {statement_name} Body"),
-                Ast("Function", f"string Name, Token[] Params, Statement[] Body"),
+                Ast("Function", f"Identifier Name, Identifier[] Params, Statement[] Body"),
                 Ast("Break", None),
                 Ast("Return", f"{expression_name} Value"), 
             ])

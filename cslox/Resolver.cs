@@ -44,7 +44,6 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Declare(name);
                 Define(name);
                 ResolveFunction(s.GetInfo(), FunctionType.Function);
-                ;
                 return;
             case If(var condition, var thenBranch, var elseBranch):
                 Resolve(condition);
@@ -131,8 +130,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         EnterScope();
         foreach (var param in function.Params)
         {
-            Declare(param.Lexeme);
-            Define(param.Lexeme);
+            Declare(param);
+            Define(param);
         }
 
         Resolve(function.Body);
@@ -141,13 +140,13 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     }
 
 
-    private void Define(string name)
+    private void Define(Identifier name)
     {
         if (_scopes.IsEmpty()) return;
         _scopes.Peek()[name] = true;
     }
 
-    private void Declare(string name)
+    private void Declare(Identifier name)
     {
         if (_scopes.IsEmpty()) return;
 

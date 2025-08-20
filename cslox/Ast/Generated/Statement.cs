@@ -59,11 +59,11 @@ public class Print(Expression expression) : Statement
     }
 }
 
-public class VarDeclaration(string name, Expression? initializer) : Statement
+public class VarDeclaration(Identifier name, Expression? initializer) : Statement
 {
-    public string Name { get; set; } = name;
+    public Identifier Name { get; set; } = name;
     public Expression? Initializer { get; set; } = initializer;
-    public new void Deconstruct(out string name, out Expression? initializer) =>
+    public new void Deconstruct(out Identifier name, out Expression? initializer) =>
         (name, initializer) = (Name, Initializer);
     public override TResult Accept<TResult>(IStatementVisitor<TResult> visitor) =>
         visitor.Visit(this);
@@ -143,12 +143,12 @@ public class While(Expression condition, Statement body) : Statement
     }
 }
 
-public class Function(string name, Token[] @params, Statement[] body) : Statement
+public class Function(Identifier name, Identifier[] @params, Statement[] body) : Statement
 {
-    public string Name { get; set; } = name;
-    public Token[] Params { get; set; } = @params;
+    public Identifier Name { get; set; } = name;
+    public Identifier[] Params { get; set; } = @params;
     public Statement[] Body { get; set; } = body;
-    public new void Deconstruct(out string name, out Token[] @params, out Statement[] body) =>
+    public new void Deconstruct(out Identifier name, out Identifier[] @params, out Statement[] body) =>
         (name, @params, body) = (Name, Params, Body);
     public override TResult Accept<TResult>(IStatementVisitor<TResult> visitor) =>
         visitor.Visit(this);

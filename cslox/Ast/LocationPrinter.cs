@@ -68,7 +68,7 @@ public class LocationPrinter : IExpressionVisitor<string>
 
                 case Lambda(var @params, var body):
                 {
-                    var paramsAsStr = string.Join<Token>(", ", @params);  
+                    var paramsAsStr = string.Join(", ", @params);  
                     sb[previousIndex - 1] = ' '; // remove the newline 
                     sb.Insert(previousIndex, $"lambda`{@params.Length}({paramsAsStr})\n");
                     break;

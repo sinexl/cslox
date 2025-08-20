@@ -28,7 +28,7 @@ public class DotnetFunction : ILoxCallable
 public class LoxFunction : ILoxCallable
 {
     // Full version of constructor
-    public LoxFunction(IList<Token> parameters, IList<Statement> body, string name, int arity,
+    public LoxFunction(IList<Identifier> parameters, IList<Statement> body, Identifier? name, int arity,
         SourceLocation location, ExecutionContext closure)
     {
         Closure = closure;
@@ -46,8 +46,7 @@ public class LoxFunction : ILoxCallable
     }
 
     public LoxFunction(Lambda lambda, ExecutionContext closure) :
-        
-        this(lambda.Params, lambda.Body, "<lambda>", lambda.Params.Length, lambda.Location, closure)
+        this(lambda.Params, lambda.Body, null, lambda.Params.Length, lambda.Location, closure)
     {
         
     }
@@ -58,7 +57,7 @@ public class LoxFunction : ILoxCallable
         var context = new ExecutionContext(Closure);
         for (int i = 0; i < Params.Length; i++)
         {
-            context.Define(Params[i].Lexeme, arguments[i]);
+            context.Define(Params[i].Id, arguments[i]);
         }
 
         try
@@ -73,13 +72,13 @@ public class LoxFunction : ILoxCallable
         return null;
     }
 
-    public Token[] Params { get; }
+    public Identifier[] Params { get; }
     public Statement[] Body { get; }
     private int _arity;
     public int Arity => _arity;
-    public string Name { get; }
+    public Identifier? Name { get; }
     public SourceLocation Location { get; }
 
     public ExecutionContext Closure { get; }
-    public override string ToString() => $"<fun {Name}>";
+    public override string ToString() => Name is not null ? $"<fun {Name}>" : "<anonymous fun>";
 }

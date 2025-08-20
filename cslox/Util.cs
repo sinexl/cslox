@@ -78,7 +78,7 @@ public static class Extensions
 
 public record struct SourceLocation()
 {
-    public string File { get; set; } = string.Empty; 
+    public string File { get; set; } = string.Empty;
     public int Line { get; set; }
     public int Offset { get; set; }
 
@@ -106,4 +106,25 @@ public struct Unit : IEquatable<Unit>
     public static bool operator ==(Unit _, Unit __) => true;
     public static bool operator !=(Unit _, Unit __) => false;
     public override int GetHashCode() => 0;
+}
+
+public struct Identifier
+{
+    public string Id { get; set; }
+    public SourceLocation Location { get; set; }
+
+    public Identifier(string id, SourceLocation location)
+    {
+        Id = id;
+        Location = location;
+    }
+
+    public override string ToString() => Id; 
+    public void Deconstruct(out string id, out SourceLocation location)
+    {
+        id = Id;
+        location = Location;
+    } 
+    public static implicit operator string(Identifier identifier) => identifier.Id; 
+
 }

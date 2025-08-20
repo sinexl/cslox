@@ -99,10 +99,10 @@ public class Sequence(Expression[] expressions) : Expression
     }
 }
 
-public class ReadVariable(string name) : Expression
+public class ReadVariable(Identifier name) : Expression
 {
-    public string Name { get; set; } = name;
-    public new void Deconstruct(out string name) =>
+    public Identifier Name { get; set; } = name;
+    public new void Deconstruct(out Identifier name) =>
         (name) = (Name);
     public override TResult Accept<TResult>(IExpressionVisitor<TResult> visitor) =>
         visitor.Visit(this);
@@ -118,11 +118,11 @@ public class ReadVariable(string name) : Expression
     }
 }
 
-public class Assign(string name, Expression value) : Expression
+public class Assign(Identifier name, Expression value) : Expression
 {
-    public string Name { get; set; } = name;
+    public Identifier Name { get; set; } = name;
     public Expression Value { get; set; } = value;
-    public new void Deconstruct(out string name, out Expression value) =>
+    public new void Deconstruct(out Identifier name, out Expression value) =>
         (name, value) = (Name, Value);
     public override TResult Accept<TResult>(IExpressionVisitor<TResult> visitor) =>
         visitor.Visit(this);
@@ -160,11 +160,11 @@ public class Call(Expression callee, Expression[] arguments) : Expression
     }
 }
 
-public class Lambda(Token[] @params, Statement[] body) : Expression
+public class Lambda(Identifier[] @params, Statement[] body) : Expression
 {
-    public Token[] Params { get; set; } = @params;
+    public Identifier[] Params { get; set; } = @params;
     public Statement[] Body { get; set; } = body;
-    public new void Deconstruct(out Token[] @params, out Statement[] body) =>
+    public new void Deconstruct(out Identifier[] @params, out Statement[] body) =>
         (@params, body) = (Params, Body);
     public override TResult Accept<TResult>(IExpressionVisitor<TResult> visitor) =>
         visitor.Visit(this);

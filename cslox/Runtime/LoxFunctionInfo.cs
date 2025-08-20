@@ -5,11 +5,11 @@ namespace cslox.Runtime;
 // Class that stores common information from Expression.Lambda and Statement.Function 
 public class LoxFunctionInfo
 {
-    public string? Name { get; init; }
-    public Token[] Params { get; init; }
+    public Identifier? Name { get; init; }
+    public Identifier[] Params { get; init; }
     public Statement[] Body { get; init; }
 
-    public LoxFunctionInfo(string? name, Token[] parameters, Statement[] body)
+    public LoxFunctionInfo(Identifier? name, Identifier[] parameters, Statement[] body)
     {
         Name = name;
         Params = parameters;
