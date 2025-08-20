@@ -152,10 +152,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
 
         var scope = _scopes.Peek();
         if (scope.ContainsKey(name))
-        {
-            // TODO: Report proper location.
-            Error(new SourceLocation(), name, "Variable with this name already declared in this scope.");
-        }
+            Error(name.Location, name, "Variable with this name already declared in this scope.");
 
         scope[name] = false;
     }
