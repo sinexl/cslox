@@ -282,7 +282,18 @@ public class InterpreterTest
             print counter; 
             """;
         var output = RecordInterpreterOutput(src).Trim();
-        Assert.Equal("10", output); 
+        Assert.Equal("10", output);
+    }
+
+    [Fact]
+    public static void Lambda_Inline_Call()
+    {
+        var src = 
+            """
+            fun (name) { print "Hello " + name; }("Michael");
+            """;
+        var output = RecordInterpreterOutput(src).Trim(); 
+        Assert.Equal("Hello Michael", output); 
     }
 
 
@@ -311,7 +322,7 @@ public class InterpreterTest
 
     private static void InterpretStatements(string src)
     {
-        var runner = new Runner("<testcase>") { AllowRedefinition = false};
+        var runner = new Runner("<testcase>") { AllowRedefinition = false };
         var (errors, exceptions) = runner.Run(src);
         foreach (var ex in exceptions)
             throw ex;

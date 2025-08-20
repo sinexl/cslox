@@ -105,8 +105,27 @@ public class Parser
         var state = SaveState();
         if (Match(TokenType.Fun))
         {
-            RestoreState(state);
-            return ParseFunctionDeclaration() ?? SyncAndNull<Statement>();
+            // This if fixes the following issue: 
+            // fun () {};
+            // This code should create a lambda function and discard it,
+            // Previously, the parser would fall into ParseFunctionDeclaration(), which requires function name. 
+            // Now we look ahead to see whether the token after 'fun' is an identifier.
+            // If so, we parse the function declaration. Otherwise, lambda.
+            var tokenType = PeekToken().Type;
+            if (tokenType == TokenType.Identifier)
+            {
+                RestoreState(state);
+                return ParseFunctionDeclaration() ?? SyncAndNull<Statement>();
+            }
+
+            if (tokenType == TokenType.LeftParen)
+            {
+                RestoreState(state);
+                return ParseStatement() ?? SyncAndNull<Statement>();
+            }
+
+            Error(PeekToken().Location,
+                $"Expected function name or function parameter list, but got {tokenType.Humanize()}");
         }
 
         if (Match(TokenType.Var))
@@ -118,11 +137,6 @@ public class Parser
         return ParseStatement() ?? SyncAndNull<Statement>();
     }
 
-    // TODO: 
-    // This is an issue that we have currently. 
-    // fun () {} ;
-    // This code should create a lambda function and discard it, since it's not assigned to variable.
-    // But now, above code just prints an error since it tries to parse it as a function declaration, which requires name 
     private Statement? ParseFunctionDeclaration()
     {
         if (!ExpectAndConsume(TokenType.Fun, out Token funTk)) return null;
