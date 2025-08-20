@@ -80,8 +80,14 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         switch (expression)
         {
             case ReadVariable(var name) r:
-                if (!_scopes.IsEmpty() && _scopes.Peek()[name] is false)
-                    Error(r.Location, name, "Cannot read local variable in its own initializer.");
+                if (!_scopes.IsEmpty())
+                {
+                    var currentScope = _scopes.Peek();
+                    if (currentScope.TryGetValue(name, out var value))
+                        if (value is false)
+                            Error(r.Location, name, "Cannot read local variable in its own initializer.");
+                }
+
                 ResolveLocal(r, name);
                 return;
             case Assign(var name, var value) a:
@@ -140,6 +146,12 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         if (_scopes.IsEmpty()) return;
 
         var scope = _scopes.Peek();
+        if (scope.ContainsKey(name))
+        {
+            // TODO: Report proper location.
+            Error(new SourceLocation(), name, "Variable with this name already declared in this scope.");
+        }
+
         scope[name] = false;
     }
 
@@ -147,8 +159,11 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     {
         foreach (var (i, scope) in _scopes.EnumerateWithIndex())
             if (scope.ContainsKey(name))
+            {
                 Interpreter.Resolve(expression, _scopes.Count - i - 1);
                 // Resolutions[expression] = _scopes.Count - 1 - i;
+                return;
+            }
     }
 
     private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, message));

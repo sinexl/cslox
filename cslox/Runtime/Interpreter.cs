@@ -7,7 +7,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
     public Interpreter()
     {
-        _locals = new(); 
+        Locals = new();
         Globals = new ExecutionContext();
         Context = Globals;
         Globals.Define("clock", new DotnetFunction(0, () => DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0));
@@ -186,19 +186,28 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
                 return Evaluate(right);
             }
-            case Assign(var name, var expr):
+            case Assign(var name, var expr) e:
             {
                 var value = Evaluate(expr);
-                try
+                bool found = Locals.TryGetValue(e, out var distanceFromScope);
+                if (found)
                 {
-                    Context.Assign(name, value);
-                    return value;
+                    Context.AssignAt(distanceFromScope, name, value);
                 }
-                catch (ArgumentException)
+                else
                 {
-                    throw new LoxVariableUndefinedException($"Could not assign to undefined variable `{name}`.",
-                        expr.Location);
+                    try
+                    {
+                        Globals.Assign(name, value);
+                    }
+                    catch (ArgumentException)
+                    {
+                        throw new LoxVariableUndefinedException($"Could not assign to undefined variable `{name}`.",
+                            expr.Location);
+                    }
                 }
+
+                return value;
             }
             case Call(var calleeExpr, var argumentsExpr):
             {
@@ -219,7 +228,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             {
                 try
                 {
-                    return Context.Get(name);
+                    return LookupVariable(name, e);
                 }
                 catch (ArgumentException)
                 {
@@ -239,10 +248,18 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
         throw new UnreachableException("Not all cases are handled for some reason");
     }
 
-    public void Resolve(Expression expression, int scopesCount)
+    private object? LookupVariable(string name, Expression expr)
     {
-        _locals[expression] = scopesCount; 
+        bool present = Locals.TryGetValue(expr, out var distanceFromScope);
+        if (present)
+            return Context.GetAt(distanceFromScope, name);
+        return Globals.Get(name);
     }
 
-    private Dictionary<Expression, int> _locals; 
+    public void Resolve(Expression expression, int scopesCount)
+    {
+        Locals[expression] = scopesCount;
+    }
+
+    public Dictionary<Expression, int> Locals { get; set; }
 }

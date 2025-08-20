@@ -1,15 +1,15 @@
-using System.Threading.Tasks.Sources;
-
 namespace cslox.Runtime;
 
 public class ExecutionContext
 {
-    public Dictionary<string, object?> Values { get; init; } = new(); 
+    public Dictionary<string, object?> Values { get; init; } = new();
+
     // Parent of the current context. 
     public ExecutionContext? Enclosing { get; set; }
+
     public ExecutionContext(ExecutionContext ctx)
     {
-        Enclosing = ctx; 
+        Enclosing = ctx;
     }
 
     public ExecutionContext()
@@ -38,8 +38,24 @@ public class ExecutionContext
         if (Values.TryGetValue(name, out var value))
             return value;
         if (Enclosing is not null)
-            return Enclosing.Get(name); 
+            return Enclosing.Get(name);
         throw new ArgumentException($"{name} is not defined.");
+    }
+
+    public object? GetAt(int distance, string name)
+    {
+        return GetAncestor(distance).Values[name];
+    }
+
+    public ExecutionContext GetAncestor(int distance)
+    {
+        var ctx = this;
+        for (int i = 0; i < distance; i++)
+        {
+            ctx = ctx.Enclosing ?? throw new ArgumentException($"Ancestor at {distance} is not defined.");
+        }
+
+        return ctx;
     }
 
     public void Clear()
@@ -52,15 +68,20 @@ public class ExecutionContext
         if (Values.ContainsKey(name))
         {
             Values[name] = value;
-            return; 
+            return;
         }
 
         if (Enclosing is not null)
         {
             Enclosing.Assign(name, value);
             return;
-        } 
-        
+        }
+
         throw new ArgumentException($"{name} is not defined.");
+    }
+
+    public void AssignAt(int distance, string name, object? value)
+    {
+        GetAncestor(distance).Values[name] = value;
     }
 }

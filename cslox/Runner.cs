@@ -9,6 +9,7 @@ public class Runner
     public event Action<Token[], IList<Error>>? OnTokenizerFinish;
 
     public event Action<IList<Statement>?, IList<Error>>? OnParserFinish;
+    public event Action<IDictionary<Expression, int>, IList<Error>>? OnResolverFinish;   
 
     // Fields 
     public Interpreter Interpreter;
@@ -55,6 +56,7 @@ public class Runner
         var resolver = new Resolver(Interpreter);
         resolver.Resolve(statements);
         errors.AddRangeAndReport(resolver.Errors, Report);
+        OnResolverFinish?.Invoke(resolver.Interpreter.Locals, resolver.Errors);
         if (resolver.Errors.Count > 0) 
             return (errors.ToArray(), []); 
 

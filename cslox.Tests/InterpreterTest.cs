@@ -311,16 +311,10 @@ public class InterpreterTest
 
     private static void InterpretStatements(string src)
     {
-        var lexer = new Lexer(src, "<testcase>");
-        Assert.Empty(lexer.Errors);
-        var parser = new Parser(lexer.Accumulate());
-        var statements = parser.Parse();
-        Assert.NotNull(statements);
-        var interpreter = new Interpreter();
-        foreach (var c in statements)
-        {
-            interpreter.Execute(c);
-        }
+        var runner = new Runner("<testcase>") { AllowRedefinition = false};
+        var (errors, exceptions) = runner.Run(src);
+        foreach (var ex in exceptions)
+            throw ex;
     }
 
     private static object? InterpretExpr(string src)

@@ -28,12 +28,26 @@ Action<IList<Token>, IList<Error>> debugTokens =
 Action<IList<Statement>?, IList<Error>> debugAst =
     (list, _) => { list?.ForEach(Console.WriteLine); };
 
+Action<IDictionary<Expression, int>, IList<Error>> debugResolver =
+    (dict, errors) =>
+    {
+        Console.WriteLine("Locals:");
+        foreach (var (key, value) in dict)
+        {
+            Console.WriteLine($"{key.Location} = {value}");
+        }
+
+        Console.WriteLine("------------------");
+    };
+
 return Main(args);
 
 
 void RunFile(string filePath)
 {
     var runner = new Runner(filePath) { AllowRedefinition = false };
+    // runner.OnResolverFinish += debugResolver; 
+    // runner.OnParserFinish += debugAst; 
     var src = File.ReadAllText(filePath);
     var (errors, exceptions) = runner.Run(src);
     if (errors.Length > 0)
