@@ -392,10 +392,10 @@ public class Parser
         }
 
         if (!ExpectAndConsume(TokenType.RightBrace)) return null;
-        // if (statements.Count == 0) TODO: Empty statement
+        // if (statements.Count == 0) 
 
         // With this condition we make { statement; } equal to statement; 
-        if (statements.Count == 1) return statements[0];
+        // if (statements.Count == 1) return statements[0];
         return new Block(statements.ToArray()) { Location = leftBraceLoc };
     }
 
