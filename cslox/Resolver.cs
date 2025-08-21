@@ -74,16 +74,24 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 foreach (var method in body)
                 {
                     FunctionType declaration = FunctionType.Method;
+                    if (method.Name == "init") declaration = FunctionType.Initializer;
                     ResolveFunction(method.GetInfo(), declaration);
                 }
 
                 ExitScope();
                 _currentClass = enclosingClass;
                 return;
-            case Return(var expression) returnExpr:
+            case Return(var ret) returnExpr:
                 if (_currentFunction == FunctionType.None)
                     Error(new TopLevelReturn(returnExpr));
-                Resolve(expression);
+                if (ret is not null)
+                {
+                    if (_currentFunction == FunctionType.Initializer)
+                        Error(new ReturnFromInitializer(returnExpr));
+
+                    Resolve(ret);
+                }
+
                 return;
             case Break:
                 return;
@@ -275,6 +283,7 @@ public enum FunctionType
     None,
     Function,
     Method,
+    Initializer,
 }
 
 public enum ClassType
@@ -314,6 +323,11 @@ public class VariableRedefinition : AnalysisError
 }
 
 public class TopLevelReturn(Return expr) : AnalysisError(expr.Location, "Cannot return from top-level code")
+{
+    public Return Expr { get; init; } = expr;
+}
+
+public class ReturnFromInitializer(Return expr) : AnalysisError(expr.Location, "Cannot return from initializer.")
 {
     public Return Expr { get; init; } = expr;
 }

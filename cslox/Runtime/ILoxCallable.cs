@@ -67,6 +67,7 @@ public class LoxFunction : ILoxCallable
         }
         catch (LoxReturnException e)
         {
+            if (IsInitializer) return Closure.GetAt(0, "this");
             return e.Value;
         }
 
