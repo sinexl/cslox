@@ -73,10 +73,17 @@ public class LocationPrinter : IExpressionVisitor<string>
                     sb.Insert(previousIndex, $"lambda`{@params.Length}({paramsAsStr})\n");
                     break;
                 }
+                case Get(var obj, var name):
+                {
+                    Impl(obj, indent + 1);
+                    sb[previousIndex - 1] = '.'; // remove the newline 
+                    sb.Insert(previousIndex, $"{name}\n");
+                    break; 
+                }
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 22 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);
