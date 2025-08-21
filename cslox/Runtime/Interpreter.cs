@@ -243,12 +243,25 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 }
             }
             case Get(var obj, var name) e:
-                object? objValue = Evaluate(obj); 
-                if (objValue is LoxInstance loxInstance) 
-                    return loxInstance.Get(name);  
-                
+            {
+                object? objValue = Evaluate(obj);
+                if (objValue is LoxInstance loxInstance)
+                    return loxInstance.Get(name);
+
                 // TODO: Custom exception for this
                 throw new LoxRuntimeException("Only instances have properties.", e.Location);
+            }
+            case Set(var obj, var name, var value) er:
+            {
+                object? receiver = Evaluate(obj);
+                if (receiver is not LoxInstance loxInstance)
+                    throw new LoxRuntimeException("Only instances have fields", er.Location); // TODO: Throw type error;
+                
+                object? valObj = Evaluate(value);
+                loxInstance.Set(name, valObj);
+                return valObj;
+            }
+
             case Lambda(_, _) s:
             {
                 var function = new LoxFunction(s, Context);
@@ -256,7 +269,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
         _ = staticAssert;
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");

@@ -42,4 +42,9 @@ public class LoxInstance
         // TODO: Custom exception for this.
         throw new LoxVariableUndefinedException($"Undefined field `{name.Id}`.", name.Location); 
     }
+
+    public void Set(Identifier name, object? value)
+    {
+        Fields[name.Id] = value;
+    }
 }
