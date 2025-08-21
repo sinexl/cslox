@@ -7,6 +7,8 @@ class NonEmpty
   add(a, b)  { print 1 + 2; } 
 }
 
+egg.Scramble(3).with(cheddar);
+
 
 
 fun triple(f) 

@@ -46,7 +46,7 @@ Syntax:
         factor                → unary ( ( "/" | "*" ) unary )* ;
         unary                 → ( "!" | "-" ) unary
                                 | call ;
-        call                  → primary ( "(" arguments ? ")" )* ;
+        call                  → primary ( "(" arguments ? ")" | "." IDENTIFIER )* ;
         arguments             → expression ( "," expression )* ;
         lambdaDeclaration     → "fun" lambda ;
         lambda                → "(" parameters? ")" block ;
@@ -656,9 +656,16 @@ public class Parser
         Expression? left = ParsePrimary();
         if (left is null) return null;
 
-        while (Match(TokenType.LeftParen))
+        while (true)
         {
-            left = ParseArguments(left ?? throw new InvalidOperationException());
+            if (Match(TokenType.LeftParen))
+                left = ParseArguments(left ?? throw new InvalidOperationException());
+            else if (Match(TokenType.Dot))
+            {
+                if (!ExpectAndConsume(TokenType.Identifier, out var name)) return null;
+                left = new Get(left ?? throw new InvalidOperationException(), name.ToIdentifier());
+            }
+            else break;
         }
 
         return left;
