@@ -76,3 +76,15 @@ public class LoxReturnException : LoxRuntimeException
 
     public object? Value { get; init; }
 }
+
+public class LoxTypeException : LoxRuntimeException
+{
+    public LoxTypeException(string message, SourceLocation location) : base(message, location)
+    { }
+}
+
+public class LoxUndefinedFieldException : LoxRuntimeException
+{
+    public LoxUndefinedFieldException(string message, SourceLocation location) : base(message, location)
+    { }
+}

@@ -58,8 +58,7 @@ public class LoxInstance
         if (method is not null)
             return method.Bind(this);
 
-        // TODO: Custom exception for this.
-        throw new LoxVariableUndefinedException($"Undefined field `{name.Id}`.", name.Location);
+        throw new LoxUndefinedFieldException($"Undefined field `{name.Id}`.", name.Location);
     }
 
     public void Set(Identifier name, object? value)

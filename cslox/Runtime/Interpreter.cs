@@ -257,14 +257,13 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 if (objValue is LoxInstance loxInstance)
                     return loxInstance.Get(name);
 
-                // TODO: Custom exception for this
-                throw new LoxRuntimeException("Only instances have properties.", e.Location);
+                throw new LoxTypeException("Only instances have properties.", e.Location);
             }
             case Set(var obj, var name, var value) er:
             {
                 object? receiver = Evaluate(obj);
                 if (receiver is not LoxInstance loxInstance)
-                    throw new LoxRuntimeException("Only instances have fields", er.Location); // TODO: Throw type error;
+                    throw new LoxTypeException("Only instances have fields", er.Location);
 
                 object? valObj = Evaluate(value);
                 loxInstance.Set(name, valObj);
