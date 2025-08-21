@@ -62,6 +62,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Resolve(expression);
                 return;
             case Class(var name, var body):
+                var enclosingClass = _currentClass;
+                _currentClass = ClassType.Class;
                 Declare(name);
                 Define(name);
                 EnterScope();
@@ -76,7 +78,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 }
 
                 ExitScope();
-
+                _currentClass = enclosingClass;
                 return;
             case Return(var expression) returnExpr:
                 if (_currentFunction == FunctionType.None)
@@ -146,6 +148,12 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 return;
             case Literal: return;
             case This @this:
+                if (_currentClass == ClassType.None)
+                {
+                    Error(new UsingThisOutsideOfMethod(@this));
+                    return;
+                }
+
                 ResolveLocal(@this, "this");
                 return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
@@ -241,6 +249,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     public List<Error> Errors { get; } = [];
     public List<Warning> Warnings { get; } = [];
     private FunctionType _currentFunction = FunctionType.None;
+    private ClassType _currentClass = ClassType.None;
     public Dictionary<string, Variable> CurrentScope => _scopes.Peek();
     public Interpreter Interpreter { get; set; }
 }
@@ -266,6 +275,12 @@ public enum FunctionType
     None,
     Function,
     Method,
+}
+
+public enum ClassType
+{
+    None,
+    Class
 }
 
 public class Variable
@@ -317,4 +332,10 @@ public class UnusedVariable(Identifier variable) : AnalysisWarning(variable.Loca
     $"Definition happens here: \n\t\t{variable.Location}")
 {
     public Identifier Variable { get; init; } = variable;
+}
+
+public class UsingThisOutsideOfMethod(This @this)
+    : AnalysisError(@this.Location, "Cannot use `this` outside of method")
+{
+    public This This { get; init; } = @this;
 }

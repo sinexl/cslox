@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using cslox.Ast.Generated;
@@ -30,10 +29,44 @@ public class ResolverTest
     [Fact]
     public void TopLevelReturn()
     {
-        var src = "return 10;"; 
+        var src = "return 10;";
         var errors = ResolveBlockErrors(src);
         Assert.Collection(errors,
-            e => Assert.IsType<TopLevelReturn>(e)); 
+            e => Assert.IsType<TopLevelReturn>(e));
+    }
+
+    [Fact]
+    public void TopLevelThis()
+    {
+        Assert.Collection(ResolveBlockErrors("this.ItemA = 10;"),
+            e => Assert.IsType<UsingThisOutsideOfMethod>(e));
+    }
+
+    [Fact]
+    public void ThisInFunction()
+    {
+        Assert.Collection(ResolveBlockErrors("fun a () { this.Field = 10; } "),
+            e => Assert.IsType<UsingThisOutsideOfMethod>(e));
+    }
+
+    [Fact]
+    public void ProperThisUsage()
+    {
+        var src =
+            """
+            class SomeClass 
+            { method () { this.a = 10; } }
+            var obj = SomeClass(); 
+            obj.method(); 
+            """;
+        var resolutions = ResolveBlock(src);
+        var expected = new Dictionary<(int, int), int>
+        {
+            [(2, 15)] = 1,
+            [(3, 11)] = 0,
+            [(4, 1)] = 0,
+        };
+        Assert.Equal(expected, resolutions);
     }
 
     [Fact]
@@ -53,11 +86,11 @@ public class ResolverTest
         var expected = new Dictionary<(int, int), int>
         {
             [(3, 23)] = 2,
-            [(5, 3)] = 0, 
+            [(5, 3)] = 0,
             [(7, 3)] = 0
-        }; 
+        };
         var resolutions = ResolveBlock(src);
-        Assert.Equal(expected, resolutions); 
+        Assert.Equal(expected, resolutions);
     }
 
 
