@@ -1,5 +1,4 @@
 ﻿using cslox;
-using cslox.Ast.Generated;
 
 int Main(string[] args)
 {
@@ -10,13 +9,9 @@ int Main(string[] args)
     }
 
     if (args.Length == 1)
-    {
         RunFile(args[0]);
-    }
     else
-    {
         Repl();
-    }
 
     return 0;
 }
@@ -32,10 +27,7 @@ Runner.ResolverHandler debugResolver =
     (dict, errors, warnings) =>
     {
         Console.WriteLine("Locals:");
-        foreach (var (key, value) in dict)
-        {
-            Console.WriteLine($"{key.Location} = {value}");
-        }
+        foreach (var (key, value) in dict) Console.WriteLine($"{key.Location} = {value}");
 
         Console.WriteLine("------------------");
     };

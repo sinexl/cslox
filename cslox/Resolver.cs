@@ -7,6 +7,20 @@ namespace cslox;
 
 public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
 {
+    private readonly Stack<Dictionary<string, Variable>> _scopes = new();
+    private ClassType _currentClass = ClassType.None;
+    private FunctionType _currentFunction = FunctionType.None;
+
+    public Resolver(Interpreter interpreter)
+    {
+        Interpreter = interpreter;
+    }
+
+    public List<Error> Errors { get; } = [];
+    public List<Warning> Warnings { get; } = [];
+    public Dictionary<string, Variable> CurrentScope => _scopes.Peek();
+    public Interpreter Interpreter { get; set; }
+
     Unit IExpressionVisitor<Unit>.Visit<TExpression>(TExpression expression)
     {
         Resolve(expression);
@@ -69,7 +83,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 EnterScope();
                 CurrentScope["this"] = new Variable(new Identifier("this", name.Location))
                 {
-                    IsDefined = true,
+                    IsDefined = true
                 };
                 foreach (var method in body)
                 {
@@ -111,15 +125,11 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         {
             case ReadVariable(var name) r:
                 if (!_scopes.IsEmpty())
-                {
                     if (CurrentScope.TryGetValue(name, out var value))
                         if (value.IsDefined is false)
-                        {
                             Error(new ReadingFromInitializer(value.Name));
-                        }
                         else
                             value.IsRead = true;
-                }
 
                 ResolveLocal(r, name);
                 return;
@@ -235,7 +245,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     }
 
 
-    public void EnterScope() => _scopes.Push(new());
+    public void EnterScope()
+    {
+        _scopes.Push(new Dictionary<string, Variable>());
+    }
 
     public void ExitScope()
     {
@@ -245,21 +258,15 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
         //         Warning(new UnusedVariable(v.Name));
     }
 
-    private Stack<Dictionary<string, Variable>> _scopes = new();
-    private void Error(AnalysisError error) => Errors.Add(error);
-    private void Warning(AnalysisWarning warning) => Warnings.Add(warning);
-
-    public Resolver(Interpreter interpreter)
+    private void Error(AnalysisError error)
     {
-        Interpreter = interpreter;
+        Errors.Add(error);
     }
 
-    public List<Error> Errors { get; } = [];
-    public List<Warning> Warnings { get; } = [];
-    private FunctionType _currentFunction = FunctionType.None;
-    private ClassType _currentClass = ClassType.None;
-    public Dictionary<string, Variable> CurrentScope => _scopes.Peek();
-    public Interpreter Interpreter { get; set; }
+    private void Warning(AnalysisWarning warning)
+    {
+        Warnings.Add(warning);
+    }
 }
 
 public static class ResolverExtensions
@@ -283,7 +290,7 @@ public enum FunctionType
     None,
     Function,
     Method,
-    Initializer,
+    Initializer
 }
 
 public enum ClassType
@@ -294,14 +301,14 @@ public enum ClassType
 
 public class Variable
 {
-    public Identifier Name { get; }
-    public required bool IsDefined { get; set; }
-    public bool IsRead { get; set; } = false;
-
     public Variable(Identifier name)
     {
         Name = name;
     }
+
+    public Identifier Name { get; }
+    public required bool IsDefined { get; set; }
+    public bool IsRead { get; set; }
 }
 
 public abstract class AnalysisError(SourceLocation location, string message, string? note = null)
@@ -311,7 +318,7 @@ public class VariableRedefinition : AnalysisError
 {
     public VariableRedefinition(Identifier firstDefined, Identifier redefinition) :
         base(redefinition.Location, $"Variable `{redefinition.Id}` is already defined.",
-            note: $"First definition happens here: \n\t\t{firstDefined}")
+            $"First definition happens here: \n\t\t{firstDefined}")
     {
         if (redefinition.Id != firstDefined.Id) throw new ArgumentException("Ids should be the same.");
         FirstDefined = firstDefined;

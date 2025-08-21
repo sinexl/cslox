@@ -8,20 +8,22 @@ public static class InterpreterExtensions
 {
     public const double Tolerance = 0.0001;
 
-    public static bool ToLoxBool(this object? boolean) => boolean switch
-    {
-        null => false,
-        bool b => b,
-        _ => true
-    };
+    public static bool ToLoxBool(this object? boolean) =>
+        boolean switch
+        {
+            null => false,
+            bool b => b,
+            _ => true
+        };
 
-    public static bool LoxEquals(this object? left, object? right) => (left, right) switch
-    {
-        (null, null) => true,
-        (null, _) or (_, null) => false,
-        (double a, double b) => Math.Abs(a - b) < Tolerance,
-        var (a, b) => a == b,
-    };
+    public static bool LoxEquals(this object? left, object? right) =>
+        (left, right) switch
+        {
+            (null, null) => true,
+            (null, _) or (_, null) => false,
+            (double a, double b) => Math.Abs(a - b) < Tolerance,
+            var (a, b) => a == b
+        };
 
     public static double ToLoxDouble(this object? obj, Expression e)
     {

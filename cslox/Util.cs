@@ -21,10 +21,7 @@ public static class Util
     public static bool ReportAllErrorsIfSome(IList<Error> errors)
     {
         if (errors.Count == 0) return true;
-        foreach (var error in errors)
-        {
-            Console.Error.WriteLine(error);
-        }
+        foreach (var error in errors) Console.Error.WriteLine(error);
 
         return false;
     }
@@ -37,11 +34,14 @@ public static class Util
 
 public static class Extensions
 {
-    public static bool HasLexeme(this TokenType type) => type switch
+    public static bool HasLexeme(this TokenType type)
     {
-        TokenType.Number or TokenType.String => true,
-        _ => false
-    };
+        return type switch
+        {
+            TokenType.Number or TokenType.String => true,
+            _ => false
+        };
+    }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
     {
@@ -53,10 +53,7 @@ public static class Extensions
     public static string ArrayTreePrint(this IEnumerable<Expression> array, int indent = 0)
     {
         var sb = new StringBuilder();
-        foreach (var e in array)
-        {
-            sb.Append($"{e.TreePrint(indent)}");
-        }
+        foreach (var e in array) sb.Append($"{e.TreePrint(indent)}");
 
         return sb.ToString();
     }
@@ -64,30 +61,28 @@ public static class Extensions
     public static string ArrayTreePrint(this IEnumerable<Statement> array, int indent = 0)
     {
         var sb = new StringBuilder();
-        foreach (var e in array)
-        {
-            sb.Append($"{e.TreePrint(indent)}");
-        }
+        foreach (var e in array) sb.Append($"{e.TreePrint(indent)}");
 
         return sb.ToString();
     }
 
     public static bool IsIdBeginning(this char c) => char.IsLetter(c) || c == '_';
+
     public static bool IsId(this char c) => char.IsLetter(c) || char.IsDigit(c) || c == '_';
 }
 
 public record struct SourceLocation()
 {
-    public string File { get; set; } = string.Empty;
-    public int Line { get; set; }
-    public int Offset { get; set; }
-
     public SourceLocation(string file, int line, int offset) : this()
     {
         File = file;
         Line = line;
         Offset = offset;
     }
+
+    public string File { get; set; } = string.Empty;
+    public int Line { get; set; }
+    public int Offset { get; set; }
 
     public override string ToString() => $"{File}:{Line}:{Offset}";
 }
@@ -109,23 +104,29 @@ public class WarningOrError
 public class Error(SourceLocation location, string message, string? note = null)
     : WarningOrError(location, message, note)
 {
-    public override string ToString() => $"{Location}: error: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
+    public override string ToString() =>
+        $"{Location}: error: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
 }
 
 public class Warning(SourceLocation location, string message, string? note = null)
     : WarningOrError(location, message, note)
 {
-    public override string ToString() => $"{Location}: warning: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
+    public override string ToString() =>
+        $"{Location}: warning: {Message}." + (Note is not null ? $"\n\tNote: {Note}" : "");
 }
 
 public struct Unit : IEquatable<Unit>
 {
     public override string ToString() => "()";
+
     public bool Equals(Unit other) => true;
+
     public override bool Equals(object? obj) => obj is Unit;
 
     public static bool operator ==(Unit _, Unit __) => true;
+
     public static bool operator !=(Unit _, Unit __) => false;
+
     public override int GetHashCode() => 0;
 }
 

@@ -5,10 +5,7 @@ namespace cslox.Ast;
 
 public class LocationPrinter : IExpressionVisitor<string>
 {
-    public string Visit<TExpression>(TExpression expression) where TExpression : Expression
-    {
-        return Print(expression);
-    }
+    public string Visit<TExpression>(TExpression expression) where TExpression : Expression => Print(expression);
 
     public string Print(Expression expression, int indentation = 0)
     {
@@ -45,10 +42,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                     Impl(inner, indent + 1);
                     break;
                 case Sequence(var expressions):
-                    foreach (var e in expressions)
-                    {
-                        Impl(e, indent + 1);
-                    }
+                    foreach (var e in expressions) Impl(e, indent + 1);
 
                     break;
                 case Binary (var left, var right):
@@ -58,10 +52,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                 case Call(var callee, var arguments):
                 {
                     Impl(callee, indent + 1);
-                    foreach (var arg in arguments)
-                    {
-                        Impl(arg, indent + 2);
-                    }
+                    foreach (var arg in arguments) Impl(arg, indent + 2);
 
                     break;
                 }
@@ -88,7 +79,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                     Impl(value, indent + 1);
                     break;
                 }
-                case This @this: break;
+                case This: break;
             }
         }
 

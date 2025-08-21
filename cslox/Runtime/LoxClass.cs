@@ -11,9 +11,7 @@ public class LoxClass : ILoxCallable
     public Identifier Name { get; init; }
     public Dictionary<string, LoxFunction> Methods { get; init; }
 
-    public override string ToString() => $"<class {Name.Id}>";
-
-    public object? Call(Interpreter interpreter, IList<object?> arguments)
+    public object Call(Interpreter interpreter, IList<object?> arguments)
     {
         LoxInstance instance = new(this);
         LoxFunction? initializer = GetMethod("init");
@@ -33,10 +31,9 @@ public class LoxClass : ILoxCallable
         }
     }
 
-    public LoxFunction? GetMethod(string name)
-    {
-        return Methods.GetValueOrDefault(name);
-    }
+    public override string ToString() => $"<class {Name.Id}>";
+
+    public LoxFunction? GetMethod(string name) => Methods.GetValueOrDefault(name);
 }
 
 public class LoxInstance
@@ -44,11 +41,12 @@ public class LoxInstance
     public LoxInstance(LoxClass @class)
     {
         Class = @class;
-        Fields = new();
+        Fields = new Dictionary<string, object?>();
     }
 
     public LoxClass Class { get; init; }
     public Dictionary<string, object?> Fields { get; init; }
+
     public override string ToString() => Class.Name.Id + " instance";
 
     public object? Get(Identifier name)

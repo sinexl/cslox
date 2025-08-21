@@ -71,20 +71,15 @@ public class Parser
 {
     private readonly List<Token> _tokens;
 
-    public struct State
-    {
-        public int Current { get; set; }
-    }
-
     private State _state;
-
-    public List<Error> Errors { get; } = new();
 
     public Parser(IEnumerable<Token> tokens)
     {
         _state.Current = 0;
         _tokens = tokens.ToList();
     }
+
+    public List<Error> Errors { get; } = new();
 
     public Statement[]? Parse()
     {
@@ -197,8 +192,11 @@ public class Parser
 
         List<Identifier> parameters = new();
 
-        void ReportError(SourceLocation errLoc) => Error(errLoc,
-            "Expected comma separated list of arguments in the function declaration ");
+        void ReportError(SourceLocation errLoc)
+        {
+            Error(errLoc,
+                "Expected comma separated list of arguments in the function declaration ");
+        }
 
         if (PeekToken().Type != TokenType.RightParen)
         {
@@ -208,16 +206,18 @@ public class Parser
             {
                 parameters.Capacity = elements.Length;
                 foreach (var element in elements)
-                {
                     if (element is not ReadVariable(var name) v)
                         ReportError(element.Location);
-                    else parameters.Add(new(name, v.Location));
-                }
+                    else parameters.Add(new Identifier(name, v.Location));
             }
             else if (expr is ReadVariable(var name) v)
-                parameters.Add(new(name, v.Location));
+            {
+                parameters.Add(new Identifier(name, v.Location));
+            }
             else
+            {
                 ReportError(expr.Location);
+            }
         }
 
         if (!ExpectAndConsume(TokenType.RightParen)) return null;
@@ -321,7 +321,10 @@ public class Parser
         // Initializer. 
         Statement? initializer;
         var afterRightParen = SaveState();
-        if (Match(TokenType.Semicolon)) initializer = null;
+        if (Match(TokenType.Semicolon))
+        {
+            initializer = null;
+        }
         else if (Match(TokenType.Var))
         {
             RestoreState(afterRightParen);
@@ -346,10 +349,7 @@ public class Parser
 
         // Increment 
         Expression? increment = null;
-        if (PeekToken().Type != TokenType.RightParen)
-        {
-            increment = ParseExpression();
-        }
+        if (PeekToken().Type != TokenType.RightParen) increment = ParseExpression();
 
         if (!ExpectAndConsume(TokenType.RightParen)) return null;
 
@@ -359,20 +359,15 @@ public class Parser
 
         var bodyLoc = body.Location;
         if (increment is not null)
-        {
             body = new Block([
                     body,
                     new ExpressionStatement(increment) { Location = increment.Location }
                 ]
             ) { Location = bodyLoc };
-        }
 
         condition = condition ?? new Literal(true) { Location = condSemicolon.Location };
         Statement whileLoop = new While(condition, body) { Location = forLoc };
-        if (initializer is not null)
-        {
-            whileLoop = new Block([initializer, whileLoop]) { Location = forLoc };
-        }
+        if (initializer is not null) whileLoop = new Block([initializer, whileLoop]) { Location = forLoc };
 
         return whileLoop;
     }
@@ -468,10 +463,7 @@ public class Parser
 
 
     // Expressions
-    public Expression? ParseExpression()
-    {
-        return ParseSequence();
-    }
+    public Expression? ParseExpression() => ParseSequence();
 
     public Expression? ParseSequence()
     {
@@ -658,17 +650,20 @@ public class Parser
         if (left is null) return null;
 
         while (true)
-        {
             if (Match(TokenType.LeftParen))
+            {
                 left = ParseArguments(left ?? throw new InvalidOperationException());
+            }
             else if (Match(TokenType.Dot))
             {
                 if (!ExpectAndConsume(TokenType.Identifier, out var name)) return null;
                 left = new Get(left ?? throw new InvalidOperationException(), name.ToIdentifier())
                     { Location = name.Location };
             }
-            else break;
-        }
+            else
+            {
+                break;
+            }
 
         return left;
     }
@@ -692,7 +687,9 @@ public class Parser
                 arguments.AddRange(elements);
             }
             else
+            {
                 arguments.Add(expr);
+            }
         }
 
         if (!ExpectAndConsume(TokenType.RightParen, out Token rightParen)) return null;
@@ -749,18 +746,19 @@ public class Parser
     private bool Match(params Span<TokenType> types)
     {
         foreach (var type in types)
-        {
             if (PeekToken().Type == type)
             {
                 SkipToken();
                 return true;
             }
-        }
 
         return false;
     }
 
-    private void SkipToken() => _ = NextToken();
+    private void SkipToken()
+    {
+        _ = NextToken();
+    }
 
     [Pure]
     private Token NextToken() => _tokens[_state.Current++];
@@ -772,7 +770,11 @@ public class Parser
     private bool IsEof() => PeekToken().Type == TokenType.Eof;
 
     public State SaveState() => _state;
-    private void RestoreState(State state) => _state = state;
+
+    private void RestoreState(State state)
+    {
+        _state = state;
+    }
 
     [Pure]
     private bool ExpectAndConsume(TokenType expected, out Token result)
@@ -813,8 +815,15 @@ public class Parser
                 : $"error: expected {str}, but got {got.Type.Humanize()}"));
     }
 
-    private void Error(TokenType expected, Token got, string? message = null) => Error([expected], got, message);
-    private void Error(SourceLocation location, string message) => Errors.Add(new Error(location, $"error: {message}"));
+    private void Error(TokenType expected, Token got, string? message = null)
+    {
+        Error([expected], got, message);
+    }
+
+    private void Error(SourceLocation location, string message)
+    {
+        Errors.Add(new Error(location, $"error: {message}"));
+    }
 
     private T? SyncAndNull<T>()
     {
@@ -850,10 +859,7 @@ public class Parser
 
         if (statements is null || self.Errors.Any())
         {
-            foreach (var error in self.Errors)
-            {
-                Console.WriteLine(error);
-            }
+            foreach (var error in self.Errors) Console.WriteLine(error);
 
             Console.Error.WriteLine("Parse Error occured. Exiting...");
             Environment.Exit(1);
@@ -862,6 +868,11 @@ public class Parser
         statements.ForEach(Console.WriteLine);
         // Console.WriteLine(locPrinter.Print(statements));
         // Console.WriteLine(prefixPrinter.Print(statements));
+    }
+
+    public struct State
+    {
+        public int Current { get; set; }
     }
 }
 

@@ -7,7 +7,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 {
     public Interpreter()
     {
-        Locals = new();
+        Locals = new Dictionary<Expression, int>();
         Globals = new ExecutionContext();
         Context = Globals;
         Globals.Define("clock", new DotnetFunction(0, () => DateTimeOffset.Now.ToUnixTimeMilliseconds() / 1000.0));
@@ -15,6 +15,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
     public ExecutionContext Globals { get; }
     public ExecutionContext Context { get; set; }
+
+    public Dictionary<Expression, int> Locals { get; set; }
 
     object? IExpressionVisitor<object?>.Visit<TExpression>(TExpression expression) => Evaluate(expression);
 
@@ -207,11 +209,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 var value = Evaluate(expr);
                 bool found = Locals.TryGetValue(e, out var distanceFromScope);
                 if (found)
-                {
                     Context.AssignAt(distanceFromScope, name, value);
-                }
                 else
-                {
                     try
                     {
                         Globals.Assign(name, value);
@@ -221,7 +220,6 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                         throw new LoxVariableUndefinedException($"Could not assign to undefined variable `{name}`.",
                             expr.Location);
                     }
-                }
 
                 return value;
             }
@@ -298,6 +296,4 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
     {
         Locals[expression] = scopesCount;
     }
-
-    public Dictionary<Expression, int> Locals { get; set; }
 }

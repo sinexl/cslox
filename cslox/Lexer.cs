@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Runtime.InteropServices.Swift;
 
 namespace cslox;
 
@@ -13,29 +12,24 @@ public record struct LexerState
         LineNumber = 1;
     }
 
-    public SourceLocation ToSourceLocation(string file)
-    {
-        int offset = Current - LineStart;
-        if (LineNumber > 1)
-        {
-            offset -= 1;
-        }
-
-        return new SourceLocation(file: file, line: LineNumber, offset);
-    }
-
     public int Current { get; set; }
     public int LineStart { get; set; }
     public int LineNumber { get; set; }
+
+    public SourceLocation ToSourceLocation(string file)
+    {
+        int offset = Current - LineStart;
+        if (LineNumber > 1) offset -= 1;
+
+        return new SourceLocation(file, LineNumber, offset);
+    }
 }
 
 [DebuggerDisplay("{Src.Substring(_state.Current)}")]
 public class Lexer
 {
     private LexerState _state;
-
-
-    public string FilePath { get; init; }
+    private LexerState _tokenStart;
 
     public Lexer(string src, string filePath)
     {
@@ -45,16 +39,15 @@ public class Lexer
         _tokenStart = _state;
     }
 
-    public static Lexer FromFile(string filePath)
-    {
-        return new Lexer(File.ReadAllText(filePath), filePath);
-    }
+
+    public string FilePath { get; init; }
 
     public List<Error> Errors { get; } = new();
     public string Src { get; init; }
 
     public SourceLocation SourceLoc => new(FilePath, _state.LineNumber, _state.Current - _state.LineStart);
-    private LexerState _tokenStart;
+
+    public static Lexer FromFile(string filePath) => new(File.ReadAllText(filePath), filePath);
 
     public Token[] Accumulate()
     {
@@ -63,9 +56,7 @@ public class Lexer
         {
             var token = ScanSingle();
             if (token is not null)
-            {
                 tokens.Add(token);
-            }
             else
                 continue;
         }
@@ -146,10 +137,11 @@ public class Lexer
     private void SkipWhitespacesAndComments()
     {
         while (true)
-        {
             if (char.IsWhiteSpace(PeekChar()))
+            {
                 while (char.IsWhiteSpace(PeekChar()) && !IsEof())
                     SkipChar();
+            }
             else if (StartsWith("/*"))
             {
                 int nestedComments = 1;
@@ -179,18 +171,17 @@ public class Lexer
 
                 if (!IsEof()) SkipChar();
             }
-            else break;
-        }
+            else
+            {
+                break;
+            }
     }
 
     [Pure]
     private Token ScanIdentifier()
     {
         var start = _state.Current;
-        while (PeekChar().IsId())
-        {
-            SkipChar();
-        }
+        while (PeekChar().IsId()) SkipChar();
 
         var word = Src.AsSpan(start, _state.Current - start);
 
@@ -205,10 +196,7 @@ public class Lexer
     private Token? ScanNumber()
     {
         var start = _state.Current;
-        while (char.IsDigit(PeekChar()))
-        {
-            SkipChar();
-        }
+        while (char.IsDigit(PeekChar())) SkipChar();
 
         if (PeekChar() == '.' && char.IsDigit(PeekNext()))
         {
@@ -269,10 +257,8 @@ public class Lexer
     }
 
     [Pure]
-    private Token CreateToken(TokenType type, string lexeme, object? literal = null)
-    {
-        return new Token(type, lexeme, literal, _tokenStart.ToSourceLocation(FilePath));
-    }
+    private Token CreateToken(TokenType type, string lexeme, object? literal = null) =>
+        new(type, lexeme, literal, _tokenStart.ToSourceLocation(FilePath));
 
     private Token CreateToken(TokenType type)
     {
@@ -323,21 +309,17 @@ public class Lexer
 
         var self = new Lexer(src, path);
         Token[] tokens = self.Accumulate().ToArray();
-        foreach (var token in tokens)
-        {
-            Console.WriteLine(token);
-        }
+        foreach (var token in tokens) Console.WriteLine(token);
 
-        foreach (var error in self.Errors)
-        {
-            Console.WriteLine($"Error: {error}");
-        }
+        foreach (var error in self.Errors) Console.WriteLine($"Error: {error}");
     }
 
     public LexerState SaveState() => _state;
+
     public void RestoreState(LexerState state) => _state = state;
 
     private bool IsEof(int index) => index >= Src.Length;
+
     public bool IsEof() => _state.Current >= Src.Length;
 
     private void Error(string message)
@@ -347,9 +329,9 @@ public class Lexer
 
     private bool StartsWith(string prefix)
     {
-        bool res = StartsWithPeek(prefix); 
+        bool res = StartsWithPeek(prefix);
         if (res) _state.Current += prefix.Length;
-        return res; 
+        return res;
     }
 
     private bool StartsWithPeek(string prefix)

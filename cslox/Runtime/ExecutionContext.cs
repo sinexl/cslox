@@ -2,11 +2,6 @@ namespace cslox.Runtime;
 
 public class ExecutionContext
 {
-    public Dictionary<string, object?> Values { get; init; } = new();
-
-    // Parent of the current context. 
-    public ExecutionContext? Enclosing { get; set; }
-
     public ExecutionContext(ExecutionContext ctx)
     {
         Enclosing = ctx;
@@ -16,6 +11,11 @@ public class ExecutionContext
     {
         Enclosing = null;
     }
+
+    public Dictionary<string, object?> Values { get; init; } = new();
+
+    // Parent of the current context. 
+    public ExecutionContext? Enclosing { get; set; }
 
     // Useful for REPLs 
     public bool AllowRedefinition { get; set; } = false;
@@ -29,7 +29,9 @@ public class ExecutionContext
             if (!Values.TryAdd(name, value)) throw new ArgumentException($"{name} is already defined");
         }
         else
+        {
             Values[name] = value;
+        }
     }
 
     public object? Get(string name)
@@ -41,18 +43,13 @@ public class ExecutionContext
         throw new ArgumentException($"{name} is not defined.");
     }
 
-    public object? GetAt(int distance, string name)
-    {
-        return GetAncestor(distance).Values[name];
-    }
+    public object? GetAt(int distance, string name) => GetAncestor(distance).Values[name];
 
     public ExecutionContext GetAncestor(int distance)
     {
         var ctx = this;
         for (int i = 0; i < distance; i++)
-        {
             ctx = ctx.Enclosing ?? throw new ArgumentException($"Ancestor at {distance} is not defined.");
-        }
 
         return ctx;
     }

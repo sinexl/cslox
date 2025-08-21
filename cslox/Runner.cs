@@ -5,24 +5,26 @@ namespace cslox;
 
 public class Runner
 {
-    // Events 
-    public delegate void TokenHandler(Token[] tokens, IList<Error> errors);
-
     public delegate void ParserHandler(Statement[]? statements, IList<Error> errors);
 
     public delegate void ResolverHandler(Dictionary<Expression, int> locals, IList<Error> errors,
         IList<Warning> warnings);
 
-    public event TokenHandler? OnTokenizerFinish;
+    // Events 
+    public delegate void TokenHandler(Token[] tokens, IList<Error> errors);
 
-    public event ParserHandler? OnParserFinish;
-    public event ResolverHandler? OnResolverFinish;
+    private bool _allowRedefinition;
 
     // Fields 
     public Interpreter Interpreter;
-    public bool Report { get; set; } = false;
 
-    private bool _allowRedefinition = false;
+    public Runner(string filepath)
+    {
+        FilePath = filepath;
+        Interpreter = new Interpreter();
+    }
+
+    public bool Report { get; set; } = false;
 
     public required bool AllowRedefinition
     {
@@ -38,11 +40,10 @@ public class Runner
 
     public string FilePath { get; init; }
 
-    public Runner(string filepath)
-    {
-        FilePath = filepath;
-        Interpreter = new();
-    }
+    public event TokenHandler? OnTokenizerFinish;
+
+    public event ParserHandler? OnParserFinish;
+    public event ResolverHandler? OnResolverFinish;
 
     public (Error[], LoxRuntimeException[]) Run(string src)
     {
@@ -74,10 +75,7 @@ public class Runner
         List<LoxRuntimeException> runtimeErrors = [];
         try
         {
-            foreach (var statement in statements)
-            {
-                Interpreter.Execute(statement);
-            }
+            foreach (var statement in statements) Interpreter.Execute(statement);
         }
         catch (LoxRuntimeException e)
         {
@@ -96,14 +94,9 @@ public static class RunnerExtensions
     {
         items.AddRange(itemsToAdd);
         if (!doReport) return;
-        foreach (var error in itemsToAdd)
-        {
-            Console.Error.WriteLine(error);
-        }
+        foreach (var error in itemsToAdd) Console.Error.WriteLine(error);
     }
 
-    public static bool Any(this (IList<Error>, IList<LoxRuntimeException>) errors)
-    {
-        return errors.Item1.Any() || errors.Item2.Any();
-    }
+    public static bool Any(this (IList<Error>, IList<LoxRuntimeException>) errors) =>
+        errors.Item1.Any() || errors.Item2.Any();
 }

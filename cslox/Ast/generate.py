@@ -119,7 +119,7 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
     f.writeln("}\n")
     
 def define_file_footer(f: TextIOWrapper):
-    f.write("// @formatter:on\n") 
+    f.write("// @formatter:on\n")
 
 
 def implement_visitor(f: TextIOWrapper, ast: Ast, visitor_name: str):
@@ -221,9 +221,11 @@ def define_ast(f: TextIOWrapper, base_ast: Ast):
                 else:
                     nullable = ""
                 if not field_type.endswith("[]"):
-                    f.writeln(f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.TreePrint(indent + 2)}}\");")
+                    f.writeln(
+                        f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.TreePrint(indent + 2)}}\");")
                 else:
-                    f.writeln(f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.ArrayTreePrint(indent + 2)}}\");")
+                    f.writeln(
+                        f"{TAB * 2}sb.Append(tab).Append($\"{field_name} =\\n{{{field_name}{nullable}.ArrayTreePrint(indent + 2)}}\");")
             f.writeln(f"{TAB * 2}return sb.ToString();")
             f.writeln(f"{TAB}}}")
 
@@ -321,7 +323,7 @@ def main():
                 Ast("While", f"{expression_name} Condition, {statement_name} Body"),
                 Ast("Function", f"Identifier Name, Identifier[] Params, Statement[] Body"),
                 Ast("Break", None),
-                Ast("Return", f"{expression_name}? Value"), 
+                Ast("Return", f"{expression_name}? Value"),
             ])
     for i in [expression_ast, statement_ast]:
         print(f"{i:f}")

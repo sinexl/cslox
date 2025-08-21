@@ -4,8 +4,6 @@ namespace cslox.Runtime;
 
 public class LoxRuntimeException : Exception
 {
-    public SourceLocation Location { get; init; }
-
     // public LoxRuntimeException(SourceLocation location)
     //     : base($"{location}: Runtime error occurred.")
     // {
@@ -24,25 +22,23 @@ public class LoxRuntimeException : Exception
         Location = location;
     }
 
+    public SourceLocation Location { get; init; }
+
     public override string ToString() => $"{Location}: {Message}";
 }
 
 public class LoxZeroDivideException : LoxRuntimeException
 {
     public LoxZeroDivideException(string message, SourceLocation location) : base(message, location)
-    {
-    }
+    { }
 
     public LoxZeroDivideException(string message, SourceLocation location, Exception inner) : base(message, location,
         inner)
-    {
-    }
+    { }
 }
 
 public class LoxCastException : LoxRuntimeException
 {
-    Expression? Expression { get; init; }
-
     public LoxCastException(string message, SourceLocation location, Expression? expression = null) : base(message,
         location)
     {
@@ -54,20 +50,20 @@ public class LoxCastException : LoxRuntimeException
     {
         Expression = expression;
     }
+
+    private Expression? Expression { get; init; }
 }
 
 public class LoxVariableUndefinedException : LoxRuntimeException
 {
     public LoxVariableUndefinedException(string message, SourceLocation location) : base(message, location)
-    {
-    }
+    { }
 }
 
 public class LoxBreakException : LoxRuntimeException
 {
-    public LoxBreakException(string msg, SourceLocation location) : base(msg, location) 
-    {
-    }
+    public LoxBreakException(string msg, SourceLocation location) : base(msg, location)
+    { }
 }
 
 // if this exception wasn't caught, `return` was used not in function; 
@@ -78,5 +74,5 @@ public class LoxReturnException : LoxRuntimeException
         Value = value;
     }
 
-    public object? Value { get; init; } 
+    public object? Value { get; init; }
 }

@@ -6,11 +6,6 @@ namespace cslox.Ast;
 
 public class PrefixPrinter : IExpressionVisitor<string>
 {
-    public string Print(Expression expression)
-    {
-        return expression.Accept(this);
-    }
-
     public string Visit<TExpression>(TExpression expression) where TExpression : Expression
     {
         switch (expression)
@@ -63,7 +58,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
 
             case Call(var callee, var arguments):
                 return Parenthesise("call", arguments);
-            case This @this: return "this";
+            case This: return "this";
         }
 
         // This is how you do static assertions in this language. 
@@ -74,8 +69,9 @@ public class PrefixPrinter : IExpressionVisitor<string>
         throw new UnreachableException("Not all cases are handled");
     }
 
-    private string Sequence(string name, Expression[] expressions)
-        => Parenthesise(name, expressions);
+    public string Print(Expression expression) => expression.Accept(this);
+
+    private string Sequence(string name, Expression[] expressions) => Parenthesise(name, expressions);
 
     private string Parenthesise(string name, params IEnumerable<Expression> expressions)
     {
@@ -98,11 +94,11 @@ public class PrefixPrinter : IExpressionVisitor<string>
     {
         var self = new PrefixPrinter();
         var expression = new Subtraction(
-            new Literal(10) { Location = new() },
-            new Literal(12) { Location = new() }
+            new Literal(10) { Location = new SourceLocation() },
+            new Literal(12) { Location = new SourceLocation() }
         )
         {
-            Location = new()
+            Location = new SourceLocation()
         };
 
         Console.WriteLine(self.Print(expression));

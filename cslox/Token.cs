@@ -3,8 +3,7 @@ namespace cslox;
 public class Token
 {
     public Token()
-    {
-    }
+    { }
 
     public Token(TokenType type, string lexeme, object? literal, SourceLocation loc)
     {
@@ -16,7 +15,7 @@ public class Token
 
     public TokenType Type { get; set; }
     public SourceLocation Location { get; set; }
-    public Object? Literal { get; set; }
+    public object? Literal { get; set; }
     public string Lexeme { get; set; } = "";
 
     public override string ToString()
@@ -94,16 +93,19 @@ public enum TokenType
 
 public static class TokenTypeExtensions
 {
-    public static bool IsStatementBeginning(this TokenType type) =>
-        type switch
+    public static bool IsStatementBeginning(this TokenType type)
+    {
+        return type switch
         {
             TokenType.Class or TokenType.Fun or TokenType.Var or TokenType.For or TokenType.If or TokenType.While
                 or TokenType.Print or TokenType.Return => true,
             _ => false
         };
+    }
 
-    public static string? Terminal(this TokenType type) =>
-        type switch
+    public static string? Terminal(this TokenType type)
+    {
+        return type switch
         {
             TokenType.LeftParen => "(",
             TokenType.RightParen => ")",
@@ -144,9 +146,11 @@ public static class TokenTypeExtensions
             TokenType.Identifier or TokenType.String or TokenType.Number or TokenType.Eof => null,
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
+    }
 
-    public static string Humanize(this TokenType type) =>
-        type switch
+    public static string Humanize(this TokenType type)
+    {
+        return type switch
         {
             TokenType.Eof => "end of file",
             TokenType.LeftParen => "opening parenthesis",
@@ -181,26 +185,30 @@ public static class TokenTypeExtensions
                 TokenType.While => $"`{type.ToString().ToLower()}` keyword",
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
+    }
 
-    public static TokenType ToTokenType(this ReadOnlySpan<char> s) => s switch
+    public static TokenType ToTokenType(this ReadOnlySpan<char> s)
     {
-        "and" => TokenType.And,
-        "class" => TokenType.Class,
-        "else" => TokenType.Else,
-        "false" => TokenType.False,
-        "fun" => TokenType.Fun,
-        "for" => TokenType.For,
-        "if" => TokenType.If,
-        "nil" => TokenType.Nil,
-        "or" => TokenType.Or,
-        "print" => TokenType.Print,
-        "return" => TokenType.Return,
-        "super" => TokenType.Super,
-        "this" => TokenType.This,
-        "true" => TokenType.True,
-        "var" => TokenType.Var,
-        "while" => TokenType.While,
-        "break" => TokenType.Break,
-        _ => TokenType.Identifier
-    };
+        return s switch
+        {
+            "and" => TokenType.And,
+            "class" => TokenType.Class,
+            "else" => TokenType.Else,
+            "false" => TokenType.False,
+            "fun" => TokenType.Fun,
+            "for" => TokenType.For,
+            "if" => TokenType.If,
+            "nil" => TokenType.Nil,
+            "or" => TokenType.Or,
+            "print" => TokenType.Print,
+            "return" => TokenType.Return,
+            "super" => TokenType.Super,
+            "this" => TokenType.This,
+            "true" => TokenType.True,
+            "var" => TokenType.Var,
+            "while" => TokenType.While,
+            "break" => TokenType.Break,
+            _ => TokenType.Identifier
+        };
+    }
 }
