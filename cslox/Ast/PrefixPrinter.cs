@@ -58,7 +58,8 @@ public class PrefixPrinter : IExpressionVisitor<string>
                 return Sequence($"lambda`{@params.Length}<{paramsAsStr}>",
                     []); // TODO: Add support for statements in PrefixPrinter
             case ReadVariable(var name): return $"{name}.*";
-            case Get(var obj, var name): return Parenthesise($"{name}.get", obj);
+            case Get(var obj, var name): return Parenthesise($"get.{name}", obj);
+            case Set(var obj, var name, var value): return Parenthesise($"set.{name}", obj, value);
 
             case Call(var callee, var arguments):
                 return Parenthesise("call", arguments);
@@ -66,7 +67,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
 
         // This is how you do static assertions in this language. 
         // Welcome to C# 
-        byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
         _ = staticAssert;
 
         throw new UnreachableException("Not all cases are handled");

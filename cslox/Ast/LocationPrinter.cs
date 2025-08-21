@@ -40,7 +40,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                     Impl(e, indent + 1);
                     break;
                 case Unary(var inner, var op):
-                    sb[previousIndex - 1] = ' '; // remove the newline 
+                    sb[previousIndex - 1] = ' '; // remove the n
                     sb.Insert(previousIndex, $"{op.Type.Terminal()}\n");
                     Impl(inner, indent + 1);
                     break;
@@ -57,7 +57,7 @@ public class LocationPrinter : IExpressionVisitor<string>
                     break;
                 case Call(var callee, var arguments):
                 {
-                    Impl(callee, indent + 1); 
+                    Impl(callee, indent + 1);
                     foreach (var arg in arguments)
                     {
                         Impl(arg, indent + 2);
@@ -68,22 +68,30 @@ public class LocationPrinter : IExpressionVisitor<string>
 
                 case Lambda(var @params, var body):
                 {
-                    var paramsAsStr = string.Join(", ", @params);  
+                    var paramsAsStr = string.Join(", ", @params);
                     sb[previousIndex - 1] = ' '; // remove the newline 
                     sb.Insert(previousIndex, $"lambda`{@params.Length}({paramsAsStr})\n");
                     break;
                 }
                 case Get(var obj, var name):
                 {
+                    sb[previousIndex - 1] = ' '; // remove the n
+                    sb.Insert(previousIndex, $"`{name}`\n");
                     Impl(obj, indent + 1);
-                    sb[previousIndex - 1] = '.'; // remove the newline 
-                    sb.Insert(previousIndex, $"{name}\n");
-                    break; 
+                    break;
+                }
+                case Set(var obj, var name, var value):
+                {
+                    sb[previousIndex - 1] = ' '; // remove the n
+                    sb.Insert(previousIndex, $"`{name}`\n");
+                    Impl(obj, indent + 1);
+                    Impl(value, indent + 1);
+                    break;
                 }
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);
@@ -92,7 +100,7 @@ public class LocationPrinter : IExpressionVisitor<string>
 
     public static void Test()
     {
-        var tokens = new Lexer("1, 2, 3 + 4", "").Accumulate();
+        var tokens = new Lexer("name.Val.Rad = 15", "").Accumulate();
         var expr = new Parser(tokens).ParseExpression() ?? throw new ArgumentNullException();
 
         var self = new LocationPrinter();

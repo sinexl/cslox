@@ -284,6 +284,7 @@ def main():
                 Ast("Call", f"{expression_name} Callee, {expression_name}[] Arguments"),
                 Ast("Lambda", "Identifier[] Params, Statement[] Body"),
                 Ast("Get", f"{expression_name} Object, Identifier Name"),
+                Ast("Set", f"{expression_name} Object, Identifier Name, {expression_name} Value"),
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),
