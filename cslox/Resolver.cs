@@ -64,7 +64,12 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Class(var name, var body):
                 Declare(name);
                 Define(name);
-                // Todo: resolve class body
+                foreach (var method in body)
+                {
+                    FunctionType declaration = FunctionType.Method;
+                    ResolveFunction(method.GetInfo(), declaration);
+                }
+
                 return;
             case Return(var expression) returnExpr:
                 if (_currentFunction == FunctionType.None)
@@ -236,6 +241,7 @@ public enum FunctionType
 {
     None,
     Function,
+    Method,
 }
 
 public class Variable
