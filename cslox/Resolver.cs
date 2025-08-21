@@ -62,11 +62,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Resolve(expression);
                 return;
             case Class(var name, var body):
-                Declare(name); 
+                Declare(name);
                 Define(name);
                 // Todo: resolve class body
                 return;
-
             case Return(var expression) returnExpr:
                 if (_currentFunction == FunctionType.None)
                     Error(new TopLevelReturn(returnExpr));
@@ -118,6 +117,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Lambda s:
                 ResolveFunction(s.GetInfo(), FunctionType.Function);
                 return;
+            case Get(var obj, _):
+                Resolve(obj);
+                // Names are not resolved since they're dynamic
+                return;
             // 
             case Grouping(var expr):
                 Resolve(expr);
@@ -128,7 +131,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Literal: return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
             default:
-                byte staticAssert = Expression.InheritorsAmount == 22 ? 0 : -1;
+                byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
                 _ = staticAssert;
                 throw new UnreachableException("Not all cases are handled");
         }

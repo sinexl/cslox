@@ -27,8 +27,19 @@ public class LoxInstance
     public LoxInstance(LoxClass @class)
     {
         Class = @class;
+        Fields = new(); 
     }
     public LoxClass Class { get; init; }
-    public override string ToString() => Class.Name.Id + " instance"; 
-    
+    public Dictionary<string, object?> Fields { get; init; } 
+    public override string ToString() => Class.Name.Id + " instance";
+
+    public object? Get(Identifier name)
+    {
+        if (Fields.TryGetValue(name.Id, out var field))
+        {
+            return field; 
+        }
+        // TODO: Custom exception for this.
+        throw new LoxVariableUndefinedException($"Undefined field `{name.Id}`.", name.Location); 
+    }
 }

@@ -99,8 +99,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case Class(var name, var body):
             {
                 Context.Define(name, null);
-                LoxClass @class = new LoxClass(name); 
-                Context.Assign(name, @class);;
+                LoxClass @class = new LoxClass(name);
+                Context.Assign(name, @class);
                 return;
             }
         }
@@ -242,6 +242,13 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location);
                 }
             }
+            case Get(var obj, var name) e:
+                object? objValue = Evaluate(obj); 
+                if (objValue is LoxInstance loxInstance) 
+                    return loxInstance.Get(name);  
+                
+                // TODO: Custom exception for this
+                throw new LoxRuntimeException("Only instances have properties.", e.Location);
             case Lambda(_, _) s:
             {
                 var function = new LoxFunction(s, Context);
@@ -249,7 +256,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 22 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
         _ = staticAssert;
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");
