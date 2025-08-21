@@ -121,6 +121,11 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Resolve(obj);
                 // Names are not resolved since they're dynamic
                 return;
+            case Set(var obj, _, var value):
+                Resolve(value);
+                Resolve(obj);
+                // Names are not resolved since they're dynamic
+                break;
             // 
             case Grouping(var expr):
                 Resolve(expr);
@@ -131,7 +136,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Literal: return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
             default:
-                byte staticAssert = Expression.InheritorsAmount == 23 ? 0 : -1;
+                byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
                 _ = staticAssert;
                 throw new UnreachableException("Not all cases are handled");
         }
