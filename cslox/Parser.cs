@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Net.Security;
 using System.Text;
 using cslox.Ast;
 using cslox.Ast.Generated;
@@ -665,7 +664,8 @@ public class Parser
             else if (Match(TokenType.Dot))
             {
                 if (!ExpectAndConsume(TokenType.Identifier, out var name)) return null;
-                left = new Get(left ?? throw new InvalidOperationException(), name.ToIdentifier());
+                left = new Get(left ?? throw new InvalidOperationException(), name.ToIdentifier())
+                    { Location = name.Location };
             }
             else break;
         }

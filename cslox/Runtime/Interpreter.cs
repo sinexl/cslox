@@ -216,18 +216,20 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
                 return value;
             }
-            case Call(var calleeExpr, var argumentsExpr):
+            case Call(var calleeExpr, var argumentsExpr) callExpr:
             {
                 var callee = Evaluate(calleeExpr);
 
                 var arguments = argumentsExpr.Select(Evaluate).ToArray();
                 var loc = calleeExpr.Location;
                 if (callee is null) throw new LoxCastException("Could not call null.", loc, calleeExpr);
+                var calleeLoc = calleeExpr.Location;
+                if (callee is null) throw new LoxCastException("Could not call null.", calleeLoc, calleeExpr);
                 if (callee is not ILoxCallable c)
-                    throw new LoxCastException("Could not call non-callable.", loc, calleeExpr);
+                    throw new LoxCastException("Could not call non-callable.", calleeLoc, calleeExpr);
                 if (arguments.Length != c.Arity)
                     throw new LoxRuntimeException($"Expected {c.Arity} arguments, but got {arguments.Length}.",
-                        loc);
+                        callExpr.Location);
 
                 return c.Call(this, arguments);
             }
