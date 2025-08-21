@@ -148,7 +148,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Lambda s:
                 ResolveFunction(s.GetInfo(), FunctionType.Function);
                 return;
-            case Get(var obj, var name):
+            case Get(var obj, _):
                 Resolve(obj);
                 // Names are not resolved since they're dynamic
                 return;

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Text;
-using cslox.Ast;
 using cslox.Ast.Generated;
 
 namespace cslox;
@@ -849,8 +848,6 @@ public class Parser
 
     public static void Test()
     {
-        var prefixPrinter = new PrefixPrinter();
-        var locPrinter = new LocationPrinter();
         var tokens = Lexer.FromFile("./QuickTests/parser.cslox").Accumulate().ToList();
         var self = new Parser(tokens);
         tokens.ForEach(t => Console.WriteLine($"{t.Location}: {t.Type}"));

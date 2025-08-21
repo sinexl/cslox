@@ -48,7 +48,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Unary(var inner, var op):
                 return Parenthesise(op.Lexeme, inner);
             case Sequence(var expressions): return Sequence("sequence", expressions);
-            case Lambda(var @params, var body):
+            case Lambda(var @params, _):
                 string paramsAsStr = string.Join(", ", @params);
                 return Sequence($"lambda`{@params.Length}<{paramsAsStr}>",
                     []); // TODO: Add support for statements in PrefixPrinter
@@ -56,7 +56,7 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Get(var obj, var name): return Parenthesise($"get.{name}", obj);
             case Set(var obj, var name, var value): return Parenthesise($"set.{name}", obj, value);
 
-            case Call(var callee, var arguments):
+            case Call(_, var arguments):
                 return Parenthesise("call", arguments);
             case This: return "this";
         }
