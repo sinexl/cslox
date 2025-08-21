@@ -96,9 +96,16 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 throw new LoxReturnException(value,
                     "Return should only be used inside functions.", ret.Location);
             }
+            case Class(var name, var body):
+            {
+                Context.Define(name, null);
+                LoxClass @class = new LoxClass(name); 
+                Context.Assign(name, @class);;
+                return;
+            }
         }
 
-        byte staticAssert = Statement.InheritorsAmount == 10 ? 0 : -1;
+        byte staticAssert = Statement.InheritorsAmount == 11 ? 0 : -1;
         _ = staticAssert;
         throw new UnreachableException("Not all cases are handled");
     }

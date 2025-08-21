@@ -61,16 +61,23 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Print(var expression):
                 Resolve(expression);
                 return;
+            case Class(var name, var body):
+                Declare(name); 
+                Define(name);
+                // Todo: resolve class body
+                return;
+
             case Return(var expression) returnExpr:
                 if (_currentFunction == FunctionType.None)
                     Error(new TopLevelReturn(returnExpr));
                 Resolve(expression);
                 return;
-            case Break: return;
+            case Break:
+                return;
             // 
             default:
             {
-                byte staticAssert = Statement.InheritorsAmount == 10 ? 0 : -1;
+                byte staticAssert = Statement.InheritorsAmount == 11 ? 0 : -1;
                 _ = staticAssert;
                 throw new UnreachableException("Not all cases are handled");
             }
