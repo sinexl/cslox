@@ -13,7 +13,8 @@ namespace cslox;
 /*
 Syntax:
         program               → declaration* EOF;
-        declaration           → varDeclaration | statement | functionDeclaration
+        declaration           → varDeclaration | statement | functionDeclaration | classDeclaration
+        classDeclaration      → "class" IDENTIFIER "{} function* "?" ;
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement | blockStatement | ifStatement
                                 | whileStatement | forStatement | breakStatement | returnStatement;
@@ -103,6 +104,12 @@ public class Parser
     public Statement? ParseDeclaration()
     {
         var state = SaveState();
+        if (Match(TokenType.Class))
+        {
+            RestoreState(state);
+            return ParseClassDeclaration() ?? SyncAndNull<Statement>();
+        }
+
         if (Match(TokenType.Fun))
         {
             // This if fixes the following issue: 
@@ -137,17 +144,52 @@ public class Parser
         return ParseStatement() ?? SyncAndNull<Statement>();
     }
 
-    private Statement? ParseFunctionDeclaration()
+    private Statement? ParseClassDeclaration()
     {
-        if (!ExpectAndConsume(TokenType.Fun, out Token funTk)) return null;
-        Debug.Assert(funTk.Type == TokenType.Fun);
-        var loc = funTk.Location;
+        if (!ExpectAndConsume(TokenType.Class, out Token classTk)) return null;
+        if (!ExpectAndConsume(TokenType.Identifier, out var className)) return null;
+        if (!ExpectAndConsume(TokenType.LeftBrace)) return null;
+        List<Function> methods = [];
+        while (PeekToken().Type != TokenType.RightBrace && !IsEof())
+        {
+            var method = ParseMethodDeclaration();
+            if (method is null) return null;
+            methods.Add(method);
+        }
+
+        if (!ExpectAndConsume(TokenType.RightBrace)) return null;
+
+        return new Class(className.ToIdentifier(), methods.ToArray()) { Location = classTk.Location };
+    }
+
+    private Function? ParseFunction(SourceLocation loc)
+    {
         if (!ExpectAndConsume(TokenType.Identifier, out var functionName)) return null;
 
         var all = ParseFunctionParametersAndStatements();
         if (all is null) return null;
         var (parameters, statements) = all.Value;
         return new Function(functionName.ToIdentifier(), parameters, statements) { Location = loc };
+    }
+
+    private Function? ParseFunctionDeclaration()
+    {
+        if (!ExpectAndConsume(TokenType.Fun, out Token funTk)) return null;
+        Debug.Assert(funTk.Type == TokenType.Fun);
+        var loc = funTk.Location;
+        return ParseFunction(loc);
+    }
+
+    private Function? ParseMethodDeclaration()
+    {
+        var nameTk = PeekToken();
+        if (nameTk.Type != TokenType.Identifier)
+        {
+            Error(nameTk.Location, "Expected method name");
+            return null;
+        }
+
+        return ParseFunction(nameTk.Location);
     }
 
     private (Identifier[], Statement[])? ParseFunctionParametersAndStatements()
