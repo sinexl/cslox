@@ -92,7 +92,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Return(var expression) ret:
             {
-                var value = Evaluate(expression);
+                object? value = null;
+                if (expression is not null)
+                    value = Evaluate(expression);
                 throw new LoxReturnException(value,
                     "Return should only be used inside functions.", ret.Location);
             }

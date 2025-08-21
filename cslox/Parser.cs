@@ -307,7 +307,7 @@ public class Parser
         }
 
         if (!ExpectAndConsume(TokenType.Semicolon)) return null;
-        return new Return(value ?? CreateLiteral(null)) { Location = returnTk.Location };
+        return new Return(value) { Location = returnTk.Location };
     }
 
     private Statement? ParseForStatement()
