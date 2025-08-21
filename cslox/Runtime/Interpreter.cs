@@ -86,7 +86,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case Function(var name, _, _) s:
             {
-                var function = new LoxFunction(s, Context);
+                var function = new LoxFunction(s, Context, false);
                 Context.Define(name, function);
                 return;
             }
@@ -102,7 +102,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 Dictionary<string, LoxFunction> methods = new();
                 foreach (var method in body)
                 {
-                    var func = new LoxFunction(method, Context);
+                    var func = new LoxFunction(method, Context, method.Name == "init");
                     methods[method.Name] = func;
                 }
 
@@ -273,7 +273,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
 
             case Lambda(_, _) s:
             {
-                var function = new LoxFunction(s, Context);
+                var function = new LoxFunction(s, Context, false);
                 return function;
             }
         }

@@ -16,12 +16,21 @@ public class LoxClass : ILoxCallable
     public object? Call(Interpreter interpreter, IList<object?> arguments)
     {
         LoxInstance instance = new(this);
+        LoxFunction? initializer = GetMethod("init");
+        if (initializer is not null)
+            initializer.Bind(instance).Call(interpreter, arguments);
+
         return instance;
     }
 
     public int Arity
     {
-        get => 0; // TODO: Constructor arity
+        get
+        {
+            var initializer = GetMethod("init");
+            if (initializer is null) return 0;
+            return initializer.Arity;
+        }
     }
 
     public LoxFunction? GetMethod(string name)

@@ -29,9 +29,10 @@ public class LoxFunction : ILoxCallable
 {
     // Full version of constructor
     public LoxFunction(IList<Identifier> parameters, IList<Statement> body, Identifier? name, int arity,
-        SourceLocation location, ExecutionContext closure)
+        SourceLocation location, ExecutionContext closure, bool isInitializer)
     {
         Closure = closure;
+        IsInitializer = isInitializer;
         Location = location;
         Params = parameters.ToArray();
         _arity = arity;
@@ -40,14 +41,14 @@ public class LoxFunction : ILoxCallable
     }
 
     // Constructor for Ast.Generated.Function  
-    public LoxFunction(Function declaration, ExecutionContext closure) :
+    public LoxFunction(Function declaration, ExecutionContext closure, bool isInitializer) :
         this(declaration.Params, declaration.Body, declaration.Name, declaration.Params.Length, declaration.Location,
-            closure)
+            closure, isInitializer)
     {
     }
 
-    public LoxFunction(Lambda lambda, ExecutionContext closure) :
-        this(lambda.Params, lambda.Body, null, lambda.Params.Length, lambda.Location, closure)
+    public LoxFunction(Lambda lambda, ExecutionContext closure, bool isInitializer) :
+        this(lambda.Params, lambda.Body, null, lambda.Params.Length, lambda.Location, closure, isInitializer)
     {
     }
 
@@ -69,8 +70,12 @@ public class LoxFunction : ILoxCallable
             return e.Value;
         }
 
+        if (IsInitializer) return Closure.GetAt(0, "this");
+
         return null;
     }
+
+    public bool IsInitializer { get; init; }
 
     public Identifier[] Params { get; }
     public Statement[] Body { get; }
@@ -86,6 +91,6 @@ public class LoxFunction : ILoxCallable
     {
         var context = new ExecutionContext(Closure);
         context.Define("this", instance);
-        return new LoxFunction(Params, Body, Name, Arity, Location, context);
+        return new LoxFunction(Params, Body, Name, Arity, Location, context, IsInitializer);
     }
 }
