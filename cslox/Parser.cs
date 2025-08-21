@@ -50,7 +50,7 @@ Syntax:
         lambdaDeclaration     → "fun" lambda ;
         lambda                → "(" parameters? ")" block ;
         primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER | lambda
-                              | "(" expression ")" ;
+                              | "(" expression ")" | this ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
         Name          Operators      Associates
@@ -704,17 +704,18 @@ public class Parser
     // number, string, nil, true, false
     private Expression? ParsePrimary()
     {
-        SourceLocation loc = PeekToken().Location;
         var state = SaveState();
         if (Match(TokenType.False)) return CreateLiteral(false);
         if (Match(TokenType.True)) return CreateLiteral(true);
         if (Match(TokenType.Nil)) return CreateLiteral(null);
+        if (Match(TokenType.This)) return new This { Location = PeekPrevious().Location };
         if (Match(TokenType.Fun))
         {
             RestoreState(state);
             return ParseLambda();
         }
 
+        SourceLocation loc = PeekToken().Location;
         if (Match(TokenType.Number, TokenType.String))
             return new Literal(PeekPrevious().Literal) { Location = loc };
 
