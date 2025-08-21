@@ -40,15 +40,15 @@ public class LoxFunction : ILoxCallable
     }
 
     // Constructor for Ast.Generated.Function  
-    public LoxFunction(Function declaration, ExecutionContext closure) : 
-        this(declaration.Params, declaration.Body, declaration.Name, declaration.Params.Length, declaration.Location, closure)
+    public LoxFunction(Function declaration, ExecutionContext closure) :
+        this(declaration.Params, declaration.Body, declaration.Name, declaration.Params.Length, declaration.Location,
+            closure)
     {
     }
 
     public LoxFunction(Lambda lambda, ExecutionContext closure) :
         this(lambda.Params, lambda.Body, null, lambda.Params.Length, lambda.Location, closure)
     {
-        
     }
 
 
@@ -81,4 +81,11 @@ public class LoxFunction : ILoxCallable
 
     public ExecutionContext Closure { get; }
     public override string ToString() => Name is not null ? $"<fun {Name}>" : "<anonymous fun>";
+
+    public LoxFunction Bind(LoxInstance instance)
+    {
+        var context = new ExecutionContext(Closure);
+        context.Define("this", instance);
+        return new LoxFunction(Params, Body, Name, Arity, Location, context);
+    }
 }

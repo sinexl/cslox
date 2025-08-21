@@ -64,11 +64,18 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Class(var name, var body):
                 Declare(name);
                 Define(name);
+                EnterScope();
+                CurrentScope["this"] = new Variable(new Identifier("this", name.Location))
+                {
+                    IsDefined = true,
+                };
                 foreach (var method in body)
                 {
                     FunctionType declaration = FunctionType.Method;
                     ResolveFunction(method.GetInfo(), declaration);
                 }
+
+                ExitScope();
 
                 return;
             case Return(var expression) returnExpr:
@@ -95,8 +102,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case ReadVariable(var name) r:
                 if (!_scopes.IsEmpty())
                 {
-                    var currentScope = _scopes.Peek();
-                    if (currentScope.TryGetValue(name, out var value))
+                    if (CurrentScope.TryGetValue(name, out var value))
                         if (value.IsDefined is false)
                         {
                             Error(new ReadingFromInitializer(value.Name));
@@ -122,7 +128,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Lambda s:
                 ResolveFunction(s.GetInfo(), FunctionType.Function);
                 return;
-            case Get(var obj, _):
+            case Get(var obj, var name):
                 Resolve(obj);
                 // Names are not resolved since they're dynamic
                 return;
@@ -139,13 +145,31 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 Resolve(expr);
                 return;
             case Literal: return;
+            case This @this:
+                ResolveLocal(@this, "this");
+                return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
             default:
-                byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
+                byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
                 _ = staticAssert;
                 throw new UnreachableException("Not all cases are handled");
         }
     }
+
+
+    // private void SetRead(Identifier name, bool read)
+    // {
+    //     var firstDefined = CurrentScope;
+    //     if (firstDefined.TryGetValue(name, out var value)) value.IsRead = read; 
+    //     else throw new ArgumentException($"Variable {name} is not defined."); 
+    //     foreach (var scope in _scopes)
+    //     {
+    //         if (scope.ContainsKey(name))
+    //             firstDefined = scope; 
+    //     }
+    //
+    //     firstDefined[name].IsRead = read; 
+    // }
 
     private void ResolveFunction(LoxFunctionInfo function, FunctionType type)
     {
@@ -167,8 +191,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     private void Define(Identifier name)
     {
         if (_scopes.IsEmpty()) return;
-        var scope = _scopes.Peek();
-        if (!scope.TryGetValue(name, out var value)) throw new ArgumentException($"Variable {name} is not declared.");
+        if (!CurrentScope.TryGetValue(name, out var value))
+            throw new ArgumentException($"Variable {name} is not declared.");
         if (value.IsDefined) throw new ArgumentException($"Variable {name} is already defined.");
         value.IsDefined = true;
     }
@@ -177,11 +201,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     {
         if (_scopes.IsEmpty()) return;
 
-        var scope = _scopes.Peek();
-        if (scope.TryGetValue(name, out var existing))
+        if (CurrentScope.TryGetValue(name, out var existing))
             Error(new VariableRedefinition(existing.Name, name));
 
-        scope[name] = new Variable(name) { IsDefined = false };
+        CurrentScope[name] = new Variable(name) { IsDefined = false };
     }
 
     private void ResolveLocal(Expression expression, string name)
@@ -200,10 +223,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
 
     public void ExitScope()
     {
-        var currentScope = _scopes.Pop();
-        foreach (var (_, v) in currentScope)
-            if (!v.IsRead)
-                Warning(new UnusedVariable(v.Name));
+        _ = _scopes.Pop();
+        // foreach (var (_, v) in currentScope)
+        //     if (!v.IsRead)
+        //         Warning(new UnusedVariable(v.Name));
     }
 
     private Stack<Dictionary<string, Variable>> _scopes = new();
@@ -218,6 +241,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     public List<Error> Errors { get; } = [];
     public List<Warning> Warnings { get; } = [];
     private FunctionType _currentFunction = FunctionType.None;
+    public Dictionary<string, Variable> CurrentScope => _scopes.Peek();
     public Interpreter Interpreter { get; set; }
 }
 

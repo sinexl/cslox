@@ -49,7 +49,7 @@ public class LoxInstance
 
         LoxFunction? method = Class.GetMethod(name.Id);
         if (method is not null)
-            return method;
+            return method.Bind(this);
 
         // TODO: Custom exception for this.
         throw new LoxVariableUndefinedException($"Undefined field `{name.Id}`.", name.Location);

@@ -249,6 +249,8 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     throw new LoxVariableUndefinedException($"{name} is not defined.", e.Location);
                 }
             }
+            case This @this:
+                return LookupVariable("this", @this);
             case Get(var obj, var name) e:
             {
                 object? objValue = Evaluate(obj);
@@ -276,7 +278,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 24 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
         _ = staticAssert;
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");
