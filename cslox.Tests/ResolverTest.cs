@@ -93,6 +93,20 @@ public class ResolverTest
         Assert.Equal(expected, resolutions);
     }
 
+    [Fact]
+    public void ReturnFromInitializer()
+    {
+        Assert.Collection(ResolveBlockErrors("class Test { init() { return 10; } }"),
+            e => Assert.IsType<ReturnFromInitializer>(e));
+    }
+
+    [Fact]
+    public void ReturningEarlyFromInitializer()
+    {
+        string src = "class Test { init() { return; } }";
+        var errors = ResolveBlockErrors(src);
+        Assert.Empty(ResolveBlockErrors(src));
+    }
 
     public static IList<Error> ResolveBlockErrors(string src)
     {
