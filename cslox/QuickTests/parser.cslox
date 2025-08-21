@@ -8,6 +8,7 @@ class NonEmpty
 }
 
 egg.Scramble(3).with(cheddar);
+breakfast.omelette.filling().meat = ham;
 
 
 

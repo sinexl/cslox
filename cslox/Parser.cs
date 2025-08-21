@@ -36,7 +36,7 @@ Syntax:
 
         expression            → sequence ;
         sequence              → assignment ( "," assignment )* ;
-        assignment            → IDENTIFIER "=" assignment
+        assignment            → (call ".")? IDENTIFIER "=" assignment
                                 | LogicalOr ;
         LogicalOr             →  logicalAnd ( "or" logicalAnd)* ;
         LogicalAnd            →  equality ( "and" equality)* ;
@@ -502,8 +502,10 @@ public class Parser
             Expression? value = ParseAssignment();
             if (value is null) return null;
 
-            if (target is ReadVariable(var name))
-                return new Assign(name, value) { Location = eq.Location };
+            if (target is ReadVariable(var varName))
+                return new Assign(varName, value) { Location = eq.Location };
+            if (target is Get(var obj, var getName))
+                return new Set(obj, getName, value) { Location = eq.Location };
 
             Error(eq.Location, "Invalid assignment target");
             return null;
