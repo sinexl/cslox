@@ -99,7 +99,14 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             case Class(var name, var body):
             {
                 Context.Define(name, null);
-                LoxClass @class = new LoxClass(name);
+                Dictionary<string, LoxFunction> methods = new();
+                foreach (var method in body)
+                {
+                    var func = new LoxFunction(method, Context);
+                    methods[method.Name] = func;
+                }
+
+                LoxClass @class = new LoxClass(name, methods);
                 Context.Assign(name, @class);
                 return;
             }
@@ -221,8 +228,6 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 var callee = Evaluate(calleeExpr);
 
                 var arguments = argumentsExpr.Select(Evaluate).ToArray();
-                var loc = calleeExpr.Location;
-                if (callee is null) throw new LoxCastException("Could not call null.", loc, calleeExpr);
                 var calleeLoc = calleeExpr.Location;
                 if (callee is null) throw new LoxCastException("Could not call null.", calleeLoc, calleeExpr);
                 if (callee is not ILoxCallable c)
@@ -258,7 +263,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 object? receiver = Evaluate(obj);
                 if (receiver is not LoxInstance loxInstance)
                     throw new LoxRuntimeException("Only instances have fields", er.Location); // TODO: Throw type error;
-                
+
                 object? valObj = Evaluate(value);
                 loxInstance.Set(name, valObj);
                 return valObj;
