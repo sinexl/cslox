@@ -75,11 +75,22 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
             case Print(var expression):
                 Resolve(expression);
                 return;
-            case Class(var name, var body):
+            case Class(var name, var superclass, var body):
                 var enclosingClass = _currentClass;
                 _currentClass = ClassType.Class;
                 Declare(name);
                 Define(name);
+                if (superclass is not null)
+                {
+                    if (name.Id == superclass.Name.Id)
+                    {
+                        Error(new SelfInheritanceError(superclass.Name));
+                        return;
+                    }
+
+                    Resolve(superclass);
+                }
+
                 EnterScope();
                 CurrentScope["this"] = new Variable(new Identifier("this", name.Location))
                 {
@@ -267,6 +278,11 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     {
         Warnings.Add(warning);
     }
+}
+
+public class SelfInheritanceError(Identifier name) : AnalysisError(name.Location, "Classes cannot inherit themselves")
+{
+    public Identifier Name { get; init; } = name;
 }
 
 public static class ResolverExtensions

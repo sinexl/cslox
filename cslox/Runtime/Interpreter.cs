@@ -100,8 +100,18 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 throw new LoxReturnException(value,
                     "Return should only be used inside functions.", ret.Location);
             }
-            case Class(var name, var body):
+            case Class(var name, var superclass, var body):
             {
+                object? superclassObject = null;
+                if (superclass is not null)
+                {
+                    superclassObject = Evaluate(superclass);
+                    if (superclassObject is not LoxClass)
+                    {
+                        throw new LoxTypeException("Superclass must be a class.", superclass.Location);
+                    }
+                }
+
                 Context.Define(name, null);
                 Dictionary<string, LoxFunction> methods = new();
                 foreach (var method in body)
@@ -110,7 +120,9 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                     methods[method.Name] = func;
                 }
 
-                LoxClass @class = new LoxClass(name, methods);
+                LoxClass @class = superclassObject is null
+                    ? new LoxClass(name, null, methods)
+                    : new LoxClass(name, superclassObject as LoxClass, methods);
                 Context.Assign(name, @class);
                 return;
             }

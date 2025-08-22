@@ -111,12 +111,13 @@ public class Block(Statement[] statements) : Statement
     }
 }
 
-public class Class(Identifier name, Function[] methods) : Statement
+public class Class(Identifier name, ReadVariable? superclass, Function[] methods) : Statement
 {
     public Identifier Name { get; set; } = name;
+    public ReadVariable? Superclass { get; set; } = superclass;
     public Function[] Methods { get; set; } = methods;
-    public new void Deconstruct(out Identifier name, out Function[] methods) =>
-        (name, methods) = (Name, Methods);
+    public new void Deconstruct(out Identifier name, out ReadVariable? superclass, out Function[] methods) =>
+        (name, superclass, methods) = (Name, Superclass, Methods);
     public override TResult Accept<TResult>(IStatementVisitor<TResult> visitor) =>
         visitor.Visit(this);
 
@@ -126,7 +127,7 @@ public class Class(Identifier name, Function[] methods) : Statement
         var sb = new StringBuilder();
         var tab = new string(' ', indent * 2);
         sb.Append(tab).Append("Class");
-        sb.Append($" ({Name}, {Methods})");
+        sb.Append($" ({Name}, {Superclass}, {Methods})");
         sb.Append('\n');
         tab = new string(' ', (indent + 1) * 2);
         return sb.ToString();

@@ -2,14 +2,16 @@ namespace cslox.Runtime;
 
 public class LoxClass : ILoxCallable
 {
-    public LoxClass(Identifier name, Dictionary<string, LoxFunction> methods)
+    public LoxClass(Identifier name, LoxClass? superclass, Dictionary<string, LoxFunction> methods)
     {
         Methods = methods;
         Name = name;
+        Superclass = superclass;
     }
 
     public Identifier Name { get; init; }
     public Dictionary<string, LoxFunction> Methods { get; init; }
+    public LoxClass? Superclass { get; init; }
 
     public object Call(Interpreter interpreter, IList<object?> arguments)
     {
@@ -33,7 +35,14 @@ public class LoxClass : ILoxCallable
 
     public override string ToString() => $"<class {Name.Id}>";
 
-    public LoxFunction? GetMethod(string name) => Methods.GetValueOrDefault(name);
+    public LoxFunction? GetMethod(string name)
+    {
+        if (Methods.TryGetValue(name, out var method))
+            return method;
+        if (Superclass is not null)
+            return Superclass.GetMethod(name);
+        return null;
+    }
 }
 
 public class LoxInstance

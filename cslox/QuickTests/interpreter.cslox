@@ -1,12 +1,13 @@
-{ 
-  class Vector {
-    init(a, b) { 
-      this.a = a;
-      this.b = b; 
-    } 
-  }
-  
-  var vec = Vector(1, 2); 
-  print vec.a; 
-  print vec.b;
+class A {
+  hello() { print "A";}
+}
+
+class B < A {
+  hello() { print "B";} 
 } 
+
+class C < A {} 
+
+var c = C(); 
+
+c.hello();  // hello 
