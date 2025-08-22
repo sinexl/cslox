@@ -1,7 +1,7 @@
 class Empty{
 }
 
-class NonEmpty
+class NonEmpty < Empty 
 {
   hello()  { print "Hello"; } 
   add(a, b)  { print 1 + 2; } 

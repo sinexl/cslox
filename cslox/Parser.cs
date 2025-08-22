@@ -12,7 +12,7 @@ namespace cslox;
 Syntax:
         program               → declaration* EOF;
         declaration           → varDeclaration | statement | functionDeclaration | classDeclaration
-        classDeclaration      → "class" IDENTIFIER "{} function* "?" ;
+        classDeclaration      → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}"  ;
         varDeclaration        → "var" IDENTIFIER ( "=" expression)? ";" ;
         statement             → expressionStatement | printStatement | blockStatement | ifStatement
                                 | whileStatement | forStatement | breakStatement | returnStatement;
@@ -141,6 +141,13 @@ public class Parser
     {
         if (!ExpectAndConsume(TokenType.Class, out Token classTk)) return null;
         if (!ExpectAndConsume(TokenType.Identifier, out var className)) return null;
+        ReadVariable? superclass = null;
+        if (Match(TokenType.Less))
+        {
+            if (!ExpectAndConsume(TokenType.Identifier, out var superclassId)) return null;
+            superclass = new ReadVariable(superclassId.ToIdentifier()) { Location = superclassId.Location };
+        }
+
         if (!ExpectAndConsume(TokenType.LeftBrace)) return null;
         List<Function> methods = [];
         while (PeekToken().Type != TokenType.RightBrace && !IsEof())
@@ -152,7 +159,7 @@ public class Parser
 
         if (!ExpectAndConsume(TokenType.RightBrace)) return null;
 
-        return new Class(className.ToIdentifier(), methods.ToArray()) { Location = classTk.Location };
+        return new Class(className.ToIdentifier(), superclass, methods.ToArray()) { Location = classTk.Location };
     }
 
     private Function? ParseFunction(SourceLocation loc)
