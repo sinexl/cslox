@@ -5,12 +5,13 @@ class NonEmpty < Empty
 {
   hello()  { print "Hello"; } 
   add(a, b)  { print 1 + 2; } 
+  sup () { super.sup(); } 
 }
 
 egg.Scramble(3).with(cheddar);
 breakfast.omelette.filling().meat = ham;
 
-
+super.sup(); 
 
 fun triple(f) 
 {

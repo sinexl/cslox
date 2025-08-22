@@ -49,7 +49,7 @@ Syntax:
         lambdaDeclaration     → "fun" lambda ;
         lambda                → "(" parameters? ")" block ;
         primary               → NUMBER | STRING | "true" | "false" | "nil" | IDENTIFIER | lambda
-                              | "(" expression ")" | this ;
+                              | "(" expression ")" | "this" | "super" "." IDENTIFIER ;
 
 Precedence & Associativity  (from the highest precedence to lowest)
         Name          Operators      Associates
@@ -712,6 +712,14 @@ public class Parser
         if (Match(TokenType.True)) return CreateLiteral(true);
         if (Match(TokenType.Nil)) return CreateLiteral(null);
         if (Match(TokenType.This)) return new This { Location = PeekPrevious().Location };
+        if (Match(TokenType.Super))
+        {
+            Token keyword = PeekPrevious();
+            if (!ExpectAndConsume(TokenType.Dot)) return null;
+            if (!ExpectAndConsume(TokenType.Identifier, out var method)) return null;
+            return new Super(method.ToIdentifier()) { Location = keyword.Location };
+        }
+
         if (Match(TokenType.Fun))
         {
             RestoreState(state);
