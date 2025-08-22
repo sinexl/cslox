@@ -80,10 +80,11 @@ public class LocationPrinter : IExpressionVisitor<string>
                     break;
                 }
                 case This: break;
+                case Super: break;
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 26 ? 0 : -1;
         _ = staticAssert;
 
         Impl(expression, indentation);

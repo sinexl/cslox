@@ -21,7 +21,7 @@ public abstract class Expression
     public abstract string TreePrint(int indent);
     // Needed so implementers of Visitor can statically assert whether they handle all possible inheritors.
     // For static_assert in C#, see https://www.lunesu.com/archives/62-Static-assert-in-C!.html
-    public const int InheritorsAmount = 25;
+    public const int InheritorsAmount = 26;
     public SourceLocation Location { get; set; } = new();
 }
 
@@ -260,6 +260,27 @@ public class This : Expression
         var sb = new StringBuilder();
         var tab = new string(' ', indent * 2);
         sb.Append(tab).Append("This");
+        sb.Append('\n');
+        tab = new string(' ', (indent + 1) * 2);
+        return sb.ToString();
+    }
+}
+
+public class Super(Identifier methodname) : Expression
+{
+    public Identifier MethodName { get; set; } = methodname;
+    public new void Deconstruct(out Identifier methodname) =>
+        (methodname) = (MethodName);
+    public override TResult Accept<TResult>(IExpressionVisitor<TResult> visitor) =>
+        visitor.Visit(this);
+
+    public override string ToString() => TreePrint(indent: 0);
+    public override string TreePrint(int indent)
+    {
+        var sb = new StringBuilder();
+        var tab = new string(' ', indent * 2);
+        sb.Append(tab).Append("Super");
+        sb.Append($" ({MethodName})");
         sb.Append('\n');
         tab = new string(' ', (indent + 1) * 2);
         return sb.ToString();

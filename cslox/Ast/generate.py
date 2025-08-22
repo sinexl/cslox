@@ -103,6 +103,7 @@ def define_file_header(f: TextIOWrapper):
 #pragma warning disable CS0109 // Member does not hide an inherited member; new keyword is not required
 
 using System.Text;
+
 namespace cslox.Ast.Generated;\n\n
 """
     f.write(code)
@@ -119,7 +120,7 @@ def define_visitor(f: TextIOWrapper, base_class: str, visitor_interface_name: st
     f.writeln("}\n")
     
 def define_file_footer(f: TextIOWrapper):
-    f.write("// @formatter:on\n")
+    f.write("// @formatter:on")
 
 
 def implement_visitor(f: TextIOWrapper, ast: Ast, visitor_name: str):
@@ -294,6 +295,7 @@ def main():
                 Ast("Get", f"{expression_name} Object, Identifier Name"),
                 Ast("Set", f"{expression_name} Object, Identifier Name, {expression_name} Value"),
                 Ast("This", None),
+                Ast("Super", "Identifier MethodName"), 
                 Ast("Binary", f"{expression_name} Left, {expression_name} Right", abstract=True, inheritors=[
                     # Arithmetics  
                     Ast("Addition", None),

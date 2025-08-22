@@ -59,11 +59,12 @@ public class PrefixPrinter : IExpressionVisitor<string>
             case Call(_, var arguments):
                 return Parenthesise("call", arguments);
             case This: return "this";
+            case Super: return "super";
         }
 
         // This is how you do static assertions in this language. 
         // Welcome to C# 
-        byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 26 ? 0 : -1;
         _ = staticAssert;
 
         throw new UnreachableException("Not all cases are handled");
