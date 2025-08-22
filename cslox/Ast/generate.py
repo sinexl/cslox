@@ -318,7 +318,7 @@ def main():
                 Ast("Print", f"{expression_name} Expression"),
                 Ast("VarDeclaration", f"Identifier Name, Expression? Initializer"),
                 Ast("Block", f"{statement_name}[] Statements"),
-                Ast("Class", "Identifier Name, Function[] Methods"),
+                Ast("Class", "Identifier Name, ReadVariable? Superclass, Function[] Methods"),
                 Ast("If", f"{expression_name} Condition, {statement_name} Then, {statement_name}? Else"),
                 Ast("While", f"{expression_name} Condition, {statement_name} Body"),
                 Ast("Function", f"Identifier Name, Identifier[] Params, Statement[] Body"),
