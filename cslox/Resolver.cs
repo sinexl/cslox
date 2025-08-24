@@ -89,6 +89,10 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                     }
 
                     Resolve(superclass);
+
+                    EnterScope();
+                    CurrentScope["super"] = new Variable(new Identifier("super", superclass.Location))
+                        { IsDefined = true };
                 }
 
                 EnterScope();
@@ -104,6 +108,7 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 }
 
                 ExitScope();
+                if (superclass is not null) ExitScope();
                 _currentClass = enclosingClass;
                 return;
             case Return(var ret) returnExpr:
@@ -185,9 +190,12 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
 
                 ResolveLocal(@this, "this");
                 return;
+            case Super super:
+                ResolveLocal(super, "super");
+                return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
             default:
-                byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
+                byte staticAssert = Expression.InheritorsAmount == 26 ? 0 : -1;
                 _ = staticAssert;
                 throw new UnreachableException("Not all cases are handled");
         }

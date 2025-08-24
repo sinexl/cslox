@@ -113,6 +113,12 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 }
 
                 Context.Define(name, null);
+                if (superclass is not null)
+                {
+                    Context = new(Context);
+                    Context.Define("super", superclassObject);
+                }
+
                 Dictionary<string, LoxFunction> methods = new();
                 foreach (var method in body)
                 {
@@ -123,6 +129,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
                 LoxClass @class = superclassObject is null
                     ? new LoxClass(name, null, methods)
                     : new LoxClass(name, superclassObject as LoxClass, methods);
+                if (superclassObject is not null) Context = Context.Enclosing ?? throw new UnreachableException();
                 Context.Assign(name, @class);
                 return;
             }
@@ -263,6 +270,16 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
             case This @this:
                 return LookupVariable("this", @this);
+            case Super(var id) super:
+                int distance = Locals[super];
+                LoxClass superClass = Context.GetAt(distance, "super") as LoxClass ?? throw new UnreachableException();
+                LoxInstance thisObj = Context.GetAt(distance - 1, "this") as LoxInstance ??
+                                      throw new UnreachableException();
+                LoxFunction? method = superClass.GetMethod(id);
+                if (method is null)
+                    throw new LoxTypeException($"Class `{superClass}` has no property `{id}`.", super.Location);
+                return method.Bind(thisObj);
+
             case Get(var obj, var name) e:
             {
                 object? objValue = Evaluate(obj);
@@ -289,7 +306,7 @@ public class Interpreter : IExpressionVisitor<object?>, IStatementVisitor<Unit>
             }
         }
 
-        byte staticAssert = Expression.InheritorsAmount == 25 ? 0 : -1;
+        byte staticAssert = Expression.InheritorsAmount == 26 ? 0 : -1;
         _ = staticAssert;
         // TODO: Evaluate sequence expressions
         throw new UnreachableException("Not all cases are handled for some reason");
