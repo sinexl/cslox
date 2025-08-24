@@ -3,11 +3,16 @@ class A {
 }
 
 class B < A {
-  hello() { print "B";} 
+  hello() { 
+    print "Preparing A..."; 
+    super.hello(); 
+    print "B";
+  } 
 } 
 
-class C < A {} 
+class C < B {} 
 
 var c = C(); 
 
+class None { init() { super.call(); } } 
 c.hello();  // hello 

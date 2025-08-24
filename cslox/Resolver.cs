@@ -88,6 +88,8 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                         return;
                     }
 
+                    _currentClass = ClassType.Subclass;
+
                     Resolve(superclass);
 
                     EnterScope();
@@ -191,6 +193,18 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
                 ResolveLocal(@this, "this");
                 return;
             case Super super:
+                if (_currentClass == ClassType.None)
+                {
+                    Error(new UsingSuperOutsideOfClass(super));
+                    return;
+                }
+
+                if (_currentClass == ClassType.Class)
+                {
+                    Error(new UsingSuperAtNonInheritedClass(super));
+                    return;
+                }
+
                 ResolveLocal(super, "super");
                 return;
             case Sequence: throw new NotImplementedException("Sequences are not fully supported yet.");
@@ -288,11 +302,6 @@ public class Resolver : IExpressionVisitor<Unit>, IStatementVisitor<Unit>
     }
 }
 
-public class SelfInheritanceError(Identifier name) : AnalysisError(name.Location, "Classes cannot inherit themselves")
-{
-    public Identifier Name { get; init; } = name;
-}
-
 public static class ResolverExtensions
 {
     public static bool IsEmpty(this ICollection collection) => collection.Count == 0;
@@ -320,7 +329,8 @@ public enum FunctionType
 public enum ClassType
 {
     None,
-    Class
+    Class,
+    Subclass,
 }
 
 public class Variable
@@ -383,4 +393,21 @@ public class UsingThisOutsideOfMethod(This @this)
     : AnalysisError(@this.Location, "Cannot use `this` outside of method")
 {
     public This This { get; init; } = @this;
+}
+
+public class SelfInheritanceError(Identifier name) : AnalysisError(name.Location, "Classes cannot inherit themselves")
+{
+    public Identifier Name { get; init; } = name;
+}
+
+public class UsingSuperOutsideOfClass(Super super)
+    : AnalysisError(super.Location, "Cannot use `super` outside of a class")
+{
+    public Super Super { get; init; } = super;
+}
+
+public class UsingSuperAtNonInheritedClass(Super super)
+    : AnalysisError(super.Location, "Cannot use `super` at non-inherited class")
+{
+    public Super Super { get; init; } = super;
 }
