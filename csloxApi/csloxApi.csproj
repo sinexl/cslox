@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>com.sinexl.cslox.Api</PackageId>
+        <Title>csloxapi</Title>
+        <Description>Api for Cslox Programming Language</Description>
+        <PackageProjectUrl>https://github.com/sinexl/cslox/</PackageProjectUrl>
+        <PackageLicenseUrl>https://mit-license.org/</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/sinexl/cslox/</RepositoryUrl>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\cslox\cslox.csproj"/>
+    </ItemGroup>
+
+</Project>
