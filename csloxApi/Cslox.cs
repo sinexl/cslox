@@ -14,7 +14,7 @@ public class Cslox
 
     public object? Evaluate(string expression)
     {
-        var lexer = new Lexer("<cslox api>", expression);
+        var lexer = new Lexer(expression, "<cslox api>");
         var tokens = lexer.Accumulate();
         foreach (var error in lexer.Errors)
         {
@@ -29,16 +29,13 @@ public class Cslox
         }
 
         object? result = null;
-        try
-        {
-            result = _interpreter.Evaluate(expr);
-        }
-        catch (LoxRuntimeException)
-        {
-            throw;
-        }
-
+        result = _interpreter.Evaluate(expr);
         return result;
+    }
+
+    public void SetGlobalDouble(string name, double value)
+    {
+        _interpreter.Globals.Define(name, value);
     }
 }
 
