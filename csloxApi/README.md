@@ -2,6 +2,10 @@
 
 # Usage
 
+```shell
+dotnet add package com.sinexl.cslox.Api --version 1.0.0
+```
+
 ```csharp
 using csolxApi; 
 var cslox = new Cslox(allowRedefinition: true);
