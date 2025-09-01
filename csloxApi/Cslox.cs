@@ -1,4 +1,5 @@
 ﻿using cslox;
+using cslox.Ast.Generated;
 using cslox.Runtime;
 
 namespace csloxApi;
@@ -7,9 +8,15 @@ public class Cslox
 {
     private Interpreter _interpreter;
 
-    public Cslox(bool allowRedefinition)
+    public Cslox(bool allowRedefinition = true)
     {
-        _interpreter = new Interpreter();
+        _interpreter = new Interpreter
+        {
+            Context =
+            {
+                AllowRedefinition = allowRedefinition
+            }
+        };
     }
 
     public object? Evaluate(string expression)
@@ -22,24 +29,30 @@ public class Cslox
         }
 
         var parser = new Parser(tokens);
-        var expr = parser.ParseExpression()!;
+        var statements = parser.Parse()!;
         foreach (var error in parser.Errors)
         {
             throw new CsloxCompileError(error);
         }
 
-        object? result = null;
-        result = _interpreter.Evaluate(expr);
-        return result;
-    }
+        var resolver = new Resolver(_interpreter);
+        resolver.Resolve(statements);
 
-    public void SetGlobalDouble(string name, double value)
-    {
-        _interpreter.Globals.Define(name, value);
+        if (statements is [ExpressionStatement expr])
+        {
+            object? result = _interpreter.Evaluate(expr.Expression);
+            return result;
+        }
+
+        foreach (var s in statements)
+            _interpreter.Execute(s);
+
+        return null;
     }
 }
 
 public class CsloxCompileError(Error error) : Exception
 {
     public Error Error { get; set; } = error;
+    public override string ToString() => Error.ToString();
 }
